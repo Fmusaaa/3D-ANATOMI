@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Spike Fase 1 — pengukuran renderer</title>
+    <style>
+      body { margin: 0; background: #0d0f12; color: #d8dee9; font: 13px ui-monospace, Consolas, monospace; }
+      #wrap { display: flex; gap: 12px; padding: 12px; }
+      canvas { width: 720px; height: 450px; border: 1px solid #2a2f38; }
+      #log { white-space: pre; flex: 1; overflow: auto; height: 90vh; }
+    </style>
+  </head>
+  <body>
+    <div id="wrap">
+      <canvas id="c"></canvas>
+      <div id="log"></div>
+    </div>
+    <script type="module" src="/src/spike/main.ts"></script>
+  </body>
+</html>

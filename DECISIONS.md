@@ -74,7 +74,7 @@ Belum diputuskan — baru relevan saat `03_decimate.py` (setelah data terunduh).
 |---|---|---|---|
 | D1 | Nama & domain proyek | Sebelum F1 | Default `corpus` dipakai di `package.json` |
 | — | Target deploy | F9 | **Diputuskan: Vercel** (D-009) |
-| D2 | `THREE.BatchedMesh` vs shader custom | F1 | Belum — wajib spike pengukuran dulu (§14.3) |
+| D2 | `THREE.BatchedMesh` vs shader custom | F1 | **Diputuskan: shader custom** (D-013) |
 | D5-a | index Uint16 vs Uint32 (§5.3.1) | F0 | **Diputuskan: Uint16** — hemat 17,3 MB (D-012) |
 | D3 | FSRS vs SM-2 | F7 | Belum |
 | D4 | Nomenklatur Latin: Z-Anatomy vs kurasi manual | Sebelum F5 | Belum |
@@ -244,3 +244,72 @@ perlu, karena total Brotli sudah 18,9 MB vs budget 60 MB. Kalau nanti draw call
 jadi masalah di F1, opsi (b) + Uint32 + batch per sistem adalah jalur mundurnya.
 
 Bandingkan sendiri dengan `python scripts/04_pack_batches.py --max-verts 0`.
+
+## D-013 — D2: shader custom + state texture, bukan THREE.BatchedMesh
+
+**Tanggal:** 7 September 2026 · **Fase:** F1 · **Status:** diputuskan dari pengukuran
+
+§14.3 mewajibkan spike pengukuran sebelum menulis renderer. Diukur pada data
+Fase 0 yang sebenarnya (33 batch, 2.234 struktur, 3.027.112 segitiga),
+viewport 1440x900, tanpa antialias tambahan.
+
+⚠️ **Mesin uji: laptop RTX 4050, BUKAN MacBook Air M4 dan bukan HP kelas
+menengah.** Target §E11 (>=55 FPS di MacBook Air M4, >=30 FPS di HP mid-range)
+**belum terverifikasi** dan tidak boleh diklaim dari angka ini.
+
+| | A: shader custom (2 pass) | A1: shader custom (opaque saja) | B: BatchedMesh |
+|---|---|---|---|
+| GPU/frame median | 2,43 ms | **2,30 ms** | **0,82 ms** |
+| GPU/frame p95 | **4,05 ms** | 6,14 ms | 9,64 ms |
+| GPU/frame terburuk | **4,6 ms** | 7,2 ms | 10,8 ms |
+| draw call | 66 | **33** | **1** |
+| geometri GPU | **31,8 MB** | **31,8 MB** | 69,3 MB |
+| JS heap | 91,2 MB | **83,0 MB** | 153,4 MB |
+| waktu build | 47 ms | **8 ms** | 742 ms |
+| idle render | 0 | 0 | 0 |
+
+**Performa bukan pembeda.** Ketiganya jauh di atas kebutuhan; bahkan frame
+terburuk B (10,8 ms) masih setara ~92 fps. BatchedMesh menang di median tapi
+kalah telak di ekor (p95 hampir 2,4x lebih lambat dari A) — dan ekor itulah
+yang terasa sebagai stutter, bukan median.
+
+**Yang menentukan adalah memori dan biaya muat:**
+
+1. **Memori 2,2x lipat.** B butuh 69,3 MB geometri vs 31,8 MB, dan JS heap
+   153 MB vs 83 MB. Di HP dengan `deviceMemory < 4` (§E11 AC4) selisih ini
+   menentukan hidup-mati.
+2. **BatchedMesh membatalkan seluruh desain kuantisasi §5.3.1/§6.3.** Dia
+   menuntut geometri float32 terpisah per struktur, jadi atribut Int16 + oct
+   normal Int8 yang susah payah dibuat di Fase 0 harus di-expand ke float di
+   CPU. Akibatnya build 742 ms vs 8 ms — **90x lebih lambat**, dan itu masuk
+   langsung ke metrik "waktu interaktif < 3,5 detik" (§E11).
+3. **Keunggulan "idiomatis" B tidak bertahan.** Opacity per struktur,
+   selectState, dan GPU picking tetap butuh shader custom. Begitu shader
+   custom masuk, alasan memakai BatchedMesh habis — sementara biayanya tetap.
+
+**Keputusan: pakai desain §5.3 (shader custom + state texture).** Ini juga
+default D2 di PRD, sekarang dengan bukti, bukan asumsi.
+
+**Catatan implementasi — pass transparan tidak boleh selalu menyala.** Varian A
+merender 6.054.224 segitiga (2x) karena pass kedua tetap memproses seluruh
+vertex lalu men-discard tiap fragmen. Saat tidak ada struktur transparan, pass
+itu harus dilewati: A1 menunjukkan draw call turun 66 -> 33 dan heap 91 -> 83 MB.
+Renderer final wajib melacak "ada struktur transparan?" dan melewati pass kedua
+kalau tidak ada.
+
+### Cara mengulang pengukuran
+
+`npm run dev` lalu buka `/spike.html`. Hasil juga tersimpan di
+`window.__SPIKE__`.
+
+⚠️ **Metodologi — dua cara yang SALAH dan sudah terbukti salah:**
+
+1. **requestAnimationFrame.** Tab tersembunyi meng-throttle rAF habis; sampel
+   pertama menghasilkan FPS "Infinity". rAF juga terkunci vsync, jadi semua
+   varian mentok 60 dan bedanya tak terlihat.
+2. **`gl.finish()` + jam dinding.** Di ANGLE/D3D11 `finish()` tidak benar-benar
+   menunggu GPU: hasilnya 0,40 ms untuk 6 juta segitiga (~15 Gtri/s), mustahil.
+
+Yang dipakai: `EXT_disjoint_timer_query_webgl2` — nanodetik GPU sungguhan.
+Semua query diterbitkan lebih dulu lalu dipanen sekali, karena tab tersembunyi
+juga meng-clamp `setTimeout` ke >=1 detik.
