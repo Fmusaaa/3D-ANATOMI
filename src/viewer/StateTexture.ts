@@ -66,6 +66,8 @@ export class StateTexture {
   init(idx: number, systemId: number): void {
     this.assertIdx(idx)
     const o = idx * 4
+    const wasTransparent = this.isTransparent(idx)
+    if (wasTransparent) this.transparentCount--
     if (this.data[o] !== 1) this.visibleCount++
     this.data[o] = 1
     this.data[o + 1] = SelectState.Normal
@@ -74,13 +76,28 @@ export class StateTexture {
     this.dirty = true
   }
 
+  /**
+   * Struktur dihitung transparan hanya kalau ia TERLIHAT dan opacity < 0,99.
+   *
+   * ⚠️ Tanpa syarat "terlihat", struktur yang di-fade-out sampai opacity 0 lalu
+   * disembunyikan akan selamanya dihitung transparan — pass transparan tidak
+   * pernah mati lagi dan draw call tetap 66 padahal tak ada yang transparan.
+   */
+  private isTransparent(idx: number): boolean {
+    const o = idx * 4
+    return this.data[o] === 1 && (this.data[o + 2] ?? 1) < 0.99
+  }
+
   setVisible(idx: number, visible: boolean): void {
     this.assertIdx(idx)
     const o = idx * 4
     const next = visible ? 1 : 0
     if (this.data[o] === next) return
+    const wasTransparent = this.isTransparent(idx)
     this.visibleCount += visible ? 1 : -1
     this.data[o] = next
+    const isTransparent = this.isTransparent(idx)
+    if (wasTransparent !== isTransparent) this.transparentCount += isTransparent ? 1 : -1
     this.dirty = true
   }
 
@@ -100,11 +117,16 @@ export class StateTexture {
     if (prev === next) return
     // Lacak berapa struktur yang benar-benar transparan, supaya renderer bisa
     // melewati pass transparan sepenuhnya kalau tidak ada (D-013).
-    const wasTransparent = prev < 0.99
-    const isTransparent = next < 0.99
-    if (wasTransparent !== isTransparent) this.transparentCount += isTransparent ? 1 : -1
+    const wasTransparent = this.isTransparent(idx)
     this.data[o] = next
+    const isTransparent = this.isTransparent(idx)
+    if (wasTransparent !== isTransparent) this.transparentCount += isTransparent ? 1 : -1
     this.dirty = true
+  }
+
+  getOpacity(idx: number): number {
+    this.assertIdx(idx)
+    return this.data[idx * 4 + 2] ?? 1
   }
 
   getVisible(idx: number): boolean {

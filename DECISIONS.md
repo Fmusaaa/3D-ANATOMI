@@ -324,3 +324,43 @@ pass kedua hanya kalau jumlah itu > 0.
 
 Terverifikasi di aplikasi: dengan semua struktur opaque, dev overlay menunjukkan
 **33 draw call** (bukan 66) dan baris "pass transparan: mati".
+
+## D-015 — Menyembunyikan sistem TIDAK mengurangi beban vertex
+
+**Tanggal:** 7 September 2026 · **Fase:** F2 (E4) · **Status:** batasan arsitektur yang diterima
+
+Konsekuensi langsung desain §5.3.3 yang dipilih di D-013: struktur yang
+tersembunyi di-cull dengan **melempar vertex-nya ke luar clip space di vertex
+shader**, bukan dengan membangun ulang index buffer.
+
+Artinya: preset "Kerangka" hanya menampilkan 255 dari 2.234 struktur, tapi GPU
+tetap memproses seluruh **3.027.112** segitiga — `renderer.info.render.triangles`
+tetap menunjukkan angka penuh. Yang hemat adalah fragmen (tidak ada yang
+di-raster), bukan vertex.
+
+Diterima karena:
+- terukur 0,7–1,2 ms per frame di laptop uji; jauh dari jadi hambatan
+- alternatifnya (membangun ulang index buffer tiap toggle) melanggar §5.2
+  "geometri tidak pernah dibangun ulang saat runtime" dan bikin toggle terasa
+  berat, padahal §E4 AC2 minta toggle berlaku ≤ 1 frame
+
+⚠️ **Perlu diukur ulang di HP mid-range (§E11).** Kalau di sana biaya vertex
+jadi hambatan, mitigasinya: pisahkan draw call per sistem (sudah begitu — 33
+batch) lalu lewati `mesh.visible = false` untuk batch yang seluruh strukturnya
+tersembunyi. Itu perbaikan lokal di `BatchManager`, bukan perubahan arsitektur.
+
+## D-016 — Bug akuntansi transparansi
+
+**Tanggal:** 7 September 2026 · **Fase:** F2 (E4) · **Status:** diperbaiki
+
+`StateTexture` menghitung struktur transparan hanya dari opacity < 0,99. Setelah
+sebuah sistem di-fade-out sampai opacity 0 lalu disembunyikan, struktur itu
+selamanya masuk hitungan transparan — pass transparan tidak pernah mati lagi.
+
+Terlihat di dev overlay: preset "Kerangka" menunjukkan **66 draw call dan
+6.054.224 segitiga** padahal tidak ada satu pun struktur transparan.
+
+Perbaikan: struktur dihitung transparan hanya kalau **terlihat DAN** opacity
+< 0,99. Setelah diperbaiki, preset yang sama menunjukkan 33 draw call dan
+3.027.112 segitiga. Preset dengan ghost (mis. "Organ dalam") memang tetap 66 —
+di situ transparansinya nyata.

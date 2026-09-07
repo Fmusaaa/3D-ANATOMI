@@ -8,13 +8,15 @@
  * Bebas three.js dan bebas React — boleh diimpor `src/components/**`.
  */
 
-import type { LoadProgress, ViewerStats } from './types'
+import type { LoadProgress, SystemState, ViewerStats } from './types'
 
 export interface ViewerEvents {
   /** Di-throttle maksimal 10 Hz (§5.2 aturan 2). Jangan pernah per-frame. */
   stats: ViewerStats
   progress: LoadProgress
   ready: { structures: number; triangles: number }
+  /** Status visibilitas/opacity tiap sistem, setelah setiap perubahan. */
+  systems: SystemState[]
   error: { message: string; cause?: unknown }
 }
 

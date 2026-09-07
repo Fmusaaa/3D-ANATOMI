@@ -33,6 +33,15 @@ export const VIEW_PRESET_LABELS: Record<ViewPreset, string> = {
   inferior: 'Inferior',
 }
 
+/** Status satu sistem organ, untuk panel kontrol visibilitas (§E4). */
+export interface SystemState {
+  id: string
+  count: number
+  visible: boolean
+  opacity: number
+  ghosted: boolean
+}
+
 /** Status pemuatan aset, untuk skeleton/progress di UI (§8.4). */
 export interface LoadProgress {
   loaded: number

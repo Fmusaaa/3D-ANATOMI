@@ -12,9 +12,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { DevOverlay } from '@/components/DevOverlay/DevOverlay'
+import { SystemTree } from '@/components/SystemTree/SystemTree'
 import { ViewToolbar } from '@/components/ViewToolbar/ViewToolbar'
 import { AtlasRenderer } from '@/viewer/AtlasRenderer'
-import type { LoadProgress, ViewPreset, ViewerStats } from '@/viewer/types'
+import { VISIBILITY_PRESETS } from '@/viewer/presets'
+import type { LoadProgress, SystemState, ViewPreset, ViewerStats } from '@/viewer/types'
 
 export function AtlasViewer() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -25,6 +27,8 @@ export function AtlasViewer() {
   const [ready, setReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showOverlay, setShowOverlay] = useState(true)
+  const [systems, setSystems] = useState<SystemState[]>([])
+  const [activePreset, setActivePreset] = useState<string | null>('semua')
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -40,6 +44,7 @@ export function AtlasViewer() {
         setReady(true)
         setProgress(null)
       }),
+      renderer.events.on('systems', setSystems),
       renderer.events.on('error', (e) => {
         setError(e.message)
       }),
@@ -61,6 +66,18 @@ export function AtlasViewer() {
   const handleReset = (): void => {
     rendererRef.current?.resetView()
   }
+  const handleToggle = (systemId: string, visible: boolean): void => {
+    rendererRef.current?.setSystemVisible(systemId, visible)
+    setActivePreset(null) // toggle manual = tidak lagi persis sebuah preset
+  }
+  const handleOpacity = (systemId: string, opacity: number): void => {
+    rendererRef.current?.setSystemOpacity(systemId, opacity)
+    setActivePreset(null)
+  }
+  const handleVisibilityPreset = (presetId: string): void => {
+    rendererRef.current?.applyPreset(presetId)
+    setActivePreset(presetId)
+  }
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0d0f12]">
@@ -81,6 +98,17 @@ export function AtlasViewer() {
           onClose={() => {
             setShowOverlay(false)
           }}
+        />
+      )}
+
+      {ready && (
+        <SystemTree
+          systems={systems}
+          presets={VISIBILITY_PRESETS}
+          activePreset={activePreset}
+          onToggle={handleToggle}
+          onOpacity={handleOpacity}
+          onPreset={handleVisibilityPreset}
         />
       )}
 

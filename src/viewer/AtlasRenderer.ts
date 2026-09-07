@@ -17,6 +17,8 @@ import * as THREE from 'three'
 import { BatchManager, systemIndex } from './BatchManager'
 import { CameraController } from './CameraController'
 import { StateTexture, type SelectStateValue } from './StateTexture'
+import { VisibilityController, type SystemState } from './VisibilityController'
+import { VISIBILITY_PRESETS } from './presets'
 import { ViewerEmitter } from './events'
 import { fetchBatch, fetchManifest, type AtlasManifest } from './loaders/AtlasLoader'
 import type { ViewPreset, ViewerStats } from './types'
@@ -44,6 +46,7 @@ export class AtlasRenderer {
   private camera: CameraController | null = null
   private batches: BatchManager | null = null
   private state: StateTexture | null = null
+  private visibility: VisibilityController | null = null
   private resizeObserver: ResizeObserver | null = null
 
   private readonly dataUrl: string
@@ -134,8 +137,10 @@ export class AtlasRenderer {
 
       const state = new StateTexture(manifest.structureCount)
       const batches = new BatchManager(state)
+      const visibility = new VisibilityController(state)
       this.state = state
       this.batches = batches
+      this.visibility = visibility
 
       let loaded = 0
       // Serial, bukan Promise.all: progres jadi bermakna dan memori puncak
@@ -144,7 +149,10 @@ export class AtlasRenderer {
         if (this.disposed) return
         const batch = await fetchBatch(this.dataUrl, entry)
         const sysIdx = systemIndex(batch.header.systemId)
-        for (const st of batch.header.structures) state.init(st.idx, sysIdx)
+        for (const st of batch.header.structures) {
+          state.init(st.idx, sysIdx)
+          visibility.register(batch.header.systemId, st.idx)
+        }
         this.expandBounds(batch.header.structures)
         batches.add(batch)
         loaded++
@@ -169,6 +177,7 @@ export class AtlasRenderer {
         structures: manifest.structureCount,
         triangles: manifest.triangleCount,
       })
+      this.events.emit('systems', visibility.snapshot())
       this.requestRender()
     } catch (e) {
       this.events.emit('error', {
@@ -199,6 +208,55 @@ export class AtlasRenderer {
   }
 
   // ------------------------------------------------------- API imperatif UI
+
+  // --- kontrol per sistem (§E4) ---
+
+  /** Toggle satu sistem. Beranimasi 180 ms (§E4 AC7). */
+  setSystemVisible(systemId: string, visible: boolean): void {
+    if (this.visibility?.setSystem(systemId, { visible })) {
+      this.events.emit('systems', this.visibility.snapshot())
+      this.requestRender()
+    }
+  }
+
+  /** §E4 AC5: slider opacity global per sistem. */
+  setSystemOpacity(systemId: string, opacity: number): void {
+    if (this.visibility?.setSystem(systemId, { opacity, ghosted: false })) {
+      this.events.emit('systems', this.visibility.snapshot())
+      this.requestRender()
+    }
+  }
+
+  /**
+   * §E4 AC6. Sistem yang tidak disebut preset disembunyikan; yang ada di
+   * `ghost` tetap tampil samar sebagai konteks spasial (§E4 AC4).
+   */
+  applyPreset(presetId: string): void {
+    const preset = VISIBILITY_PRESETS.find((p) => p.id === presetId)
+    const vis = this.visibility
+    if (!preset || !vis) return
+
+    const show = new Set(preset.show)
+    const ghost = new Set(preset.ghost ?? [])
+    let changed = false
+    for (const s of vis.snapshot()) {
+      if (show.has(s.id)) {
+        changed = vis.setSystem(s.id, { visible: true, opacity: 1, ghosted: false }) || changed
+      } else if (ghost.has(s.id)) {
+        changed = vis.setSystem(s.id, { visible: true, ghosted: true }) || changed
+      } else {
+        changed = vis.setSystem(s.id, { visible: false }) || changed
+      }
+    }
+    if (changed) {
+      this.events.emit('systems', vis.snapshot())
+      this.requestRender()
+    }
+  }
+
+  systems(): SystemState[] {
+    return this.visibility?.snapshot() ?? []
+  }
 
   setVisibility(idx: number, visible: boolean): void {
     this.state?.setVisible(idx, visible)
@@ -248,10 +306,11 @@ export class AtlasRenderer {
 
     // Kamera bergerak sendiri (damping / animasi preset) -> perlu frame lagi.
     const cameraMoving = camera.update(now)
+    const fading = this.visibility?.update(now) ?? false
     if (this.state?.flush()) this.needsRender = true
     if (this.batches?.syncTransparentPass()) this.needsRender = true
 
-    if (cameraMoving || this.needsRender) {
+    if (cameraMoving || fading || this.needsRender) {
       const t0 = performance.now()
       renderer.render(this.scene, camera.camera)
       this.lastFrameMs = performance.now() - t0
@@ -262,7 +321,7 @@ export class AtlasRenderer {
 
     // Jadwalkan lagi HANYA selama kamera masih bergerak. Begitu damping
     // selesai, loop mati total dan idle benar-benar 0 render.
-    if (cameraMoving && this.rafId === null) {
+    if ((cameraMoving || fading) && this.rafId === null) {
       this.rafId = requestAnimationFrame(this.frame)
     }
 
