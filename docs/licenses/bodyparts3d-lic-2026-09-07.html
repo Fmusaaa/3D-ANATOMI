@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>利用許諾 - BodyParts3D | LSDB Archive</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Database Archive">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="G0rLB5p0oq06_MIFwqhJ0V0NZE_IqT4HGN3bT8Tc2nx72TyDzEdVi5wP7Q1-Csz2XURPBVxMrEKCHzihGXmWYw" />
+    <meta name="csp-nonce" content="I22bvKW5TKodRaPjfWb1qA==" />
+
+    
+
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <link rel="stylesheet" href="/assets/actiontext-e646701d.css" data-turbo-track="reload" />
+<link rel="stylesheet" href="/assets/application-8b441ae0.css" data-turbo-track="reload" />
+<link rel="stylesheet" href="/assets/database_metadatum-7803704f.css" data-turbo-track="reload" />
+<link rel="stylesheet" href="/assets/tailwind-f1dc8163.css" data-turbo-track="reload" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
+    <script type="importmap" data-turbo-track="reload" nonce="I22bvKW5TKodRaPjfWb1qA==">{
+  "imports": {
+    "application": "/assets/application-d2f8354c.js",
+    "@hotwired/turbo-rails": "/assets/turbo.min-ad2c7b86.js",
+    "@hotwired/stimulus": "/assets/stimulus.min-4b1e420e.js",
+    "@hotwired/stimulus-loading": "/assets/stimulus-loading-1fc53fe7.js",
+    "trix": "/assets/trix-9a18fe03.js",
+    "@rails/actiontext": "/assets/actiontext.esm-c376325e.js",
+    "tinymce": "/assets/tinymce/tinymce.min-b01e51a6.js",
+    "controllers/admin/database_metadata_controller": "/assets/controllers/admin/database_metadata_controller-62bc504f.js",
+    "controllers/admin/databases_controller": "/assets/controllers/admin/databases_controller-c3d857c8.js",
+    "controllers/admin/export_controller": "/assets/controllers/admin/export_controller-df0e9e73.js",
+    "controllers/admin/flash_controller": "/assets/controllers/admin/flash_controller-f13cc4ab.js",
+    "controllers/admin/tinymce_controller": "/assets/controllers/admin/tinymce_controller-8e84d748.js",
+    "controllers/admin/users_controller": "/assets/controllers/admin/users_controller-60b64014.js",
+    "controllers/application": "/assets/controllers/application-3affb389.js",
+    "controllers/confirm_dialog_controller": "/assets/controllers/confirm_dialog_controller-f4369c29.js",
+    "controllers/data_shared_state": "/assets/controllers/data_shared_state-b48fcfd4.js",
+    "controllers/database_shared_state": "/assets/controllers/database_shared_state-7e8bd39c.js",
+    "controllers/detail_search_controller": "/assets/controllers/detail_search_controller-33b563f4.js",
+    "controllers/download_controller": "/assets/controllers/download_controller-8f7eaddb.js",
+    "controllers/export_controller": "/assets/controllers/export_controller-acb41065.js",
+    "controllers/filter_toggle_controller": "/assets/controllers/filter_toggle_controller-135a298d.js",
+    "controllers/home_shared_state": "/assets/controllers/home_shared_state-b908ab28.js",
+    "controllers": "/assets/controllers/index-ee64e1f1.js",
+    "controllers/list_controller": "/assets/controllers/list_controller-9d521029.js",
+    "controllers/modal_controller": "/assets/controllers/modal_controller-504068f9.js",
+    "controllers/poll_controller": "/assets/controllers/poll_controller-3d9731bd.js",
+    "controllers/search_controller": "/assets/controllers/search_controller-8998d715.js",
+    "controllers/tabs_controller": "/assets/controllers/tabs_controller-ae0b47fe.js",
+    "controllers/trix_controller": "/assets/controllers/trix_controller-b1c5208c.js"
+  }
+}</script>
+<link rel="modulepreload" href="/assets/application-d2f8354c.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/turbo.min-ad2c7b86.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/stimulus.min-4b1e420e.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/stimulus-loading-1fc53fe7.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/trix-9a18fe03.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/actiontext.esm-c376325e.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/tinymce/tinymce.min-b01e51a6.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/admin/database_metadata_controller-62bc504f.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/admin/databases_controller-c3d857c8.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/admin/export_controller-df0e9e73.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/admin/flash_controller-f13cc4ab.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/admin/tinymce_controller-8e84d748.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/admin/users_controller-60b64014.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/application-3affb389.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/confirm_dialog_controller-f4369c29.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/data_shared_state-b48fcfd4.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/database_shared_state-7e8bd39c.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/detail_search_controller-33b563f4.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/download_controller-8f7eaddb.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/export_controller-acb41065.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/filter_toggle_controller-135a298d.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/home_shared_state-b908ab28.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/index-ee64e1f1.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/list_controller-9d521029.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/modal_controller-504068f9.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/poll_controller-3d9731bd.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/search_controller-8998d715.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/tabs_controller-ae0b47fe.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<link rel="modulepreload" href="/assets/controllers/trix_controller-b1c5208c.js" nonce="I22bvKW5TKodRaPjfWb1qA==">
+<script type="module" nonce="I22bvKW5TKodRaPjfWb1qA==">import "application"</script>
+  </head>
+
+  <body>
+    <!--  Start Common header & Footer  -->
+    <script type="text/javascript"
+            src="/media/dbarchive/common-header-and-footer/script/common-header-and-footer.js"
+            style="display: block" id="common-header-and-footer__script"></script>
+    <!--  End Common header & Footer  -->
+
+    <header class="pt-3">
+      <div class="relative flex items-center w-[960px] mx-auto">
+  <div class="mr-auto">
+    <a href="/index-e.html">
+      <img class="inline-block" src="/assets/logo-06f529d0.png" />
+</a>    <span class="ml-5 text-xs align-top">
+      [<a target="_blank" rel="noopener noreferrer" href="/files/nbdc_riyou_kiyaku_en.pdf">Terms of service</a>]
+    </span>
+  </div>
+
+  <div class="absolute left-1/2 -translate-x-1/2 text-center">
+
+    <img class="block mx-auto" src="/assets/banner_e-103701f3.png" />
+  </div>
+
+  <div class="">
+      <div class="text-xs text-right">
+  [
+    <a href="/jp/bodyparts3d/lic.html">Japanese</a>
+  |
+    English
+  ]
+</div>
+
+
+    <form id="dbsearch" action="https://dbsearch.biosciencedbc.jp/result.php" method="get" class="mt-4"
+          target="_blank" rel="noopener noreferrer">
+      <input id="dbsearch_lang" name="lang" value="ja" type="hidden">
+      <input id="dbsearch_page" name="page" value="1" type="hidden">
+      <input id="dbsearch_target_node" name="target_node" value="dbarchive_root" type="hidden">
+      <input id="dbsearch_target_node_type" name="target_node_type" value="category" type="hidden">
+      <div class="flex items-center">
+        <input id="dbsearch_text" name="phrase" placeholder="Search across datasets..." type="text"
+               class="text-xs p-1 max-w-[200px]">
+        <button name="button" type="submit">
+          <span class="material-symbols-outlined !text-[16px] bg-gray-400 text-white rounded-md cursor-pointer ml-1 p-1 ">search</span>
+</button>      </div>
+    </form>
+  </div>
+</div>
+
+<nav class="container w-[960px] mx-auto flex items-center justify-between text-sm mt-5 mb-2 bg-blue-400 py-2">
+  <ul class="flex">
+      <li>
+        <a class="text-white bg-blue-400 hover:bg-blue-600 px-5 py-2" href="/index-e.html">Home</a>
+      </li>
+      <li>
+        <a class="text-white bg-blue-400 hover:bg-blue-600 px-5 py-2" href="/contents-en/about/about.html">About Archive</a>
+      </li>
+      <li>
+        <a class="text-white bg-blue-400 hover:bg-blue-600 px-5 py-2" href="/contents-en/update-list/archive-updates.html">Update History</a>
+      </li>
+      <li>
+        <a class="text-white bg-blue-400 hover:bg-blue-600 px-5 py-2" href="/datameta-list-e.html">Data List</a>
+      </li>
+      <li>
+        <a class="text-white bg-blue-400 hover:bg-blue-600 px-5 py-2" href="https://form2.jst.go.jp/s/contact_nbdc">Contact us</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+    <main id="main-content" class="container mx-auto">
+      
+<div class="w-[960px] mx-auto">
+  <div class="my-3 p-3 font-bold bg-lime-100 w-full">
+  BodyParts3D
+</div>
+
+
+  <div class="mt-5 flex items-start gap-5 text-sm w-[960px] mx-auto">
+  
+    <div>
+  <div class="bg-[#7fbbe8] text-white font-bold whitespace-nowrap p-3">
+    About This Database
+  </div>
+  <div class="p-3 border border-[#7fbbe8] shrink-0 text-xs">
+    <ul>
+      <li class="flex items-center gap-2">
+        <img src="/assets/sq_blue-ac500e48.png" />
+        <a class="" href="/en/bodyparts3d/desc.html">Database Description</a>
+      </li>
+
+      <li class="flex items-start gap-2 mt-3">
+        <img class="mt-1" src="/assets/sq_blue-ac500e48.png" />
+        <a class="" href="/en/bodyparts3d/download.html">Download</a>
+
+      </li>
+
+      <li class="flex items-start gap-2 mt-3">
+        <img class="mt-1" src="/assets/sq_blue-ac500e48.png" />
+        <a class="text-orange-400 font-bold" href="/en/bodyparts3d/lic.html">License</a>
+      </li>
+
+      <li class="flex items-start gap-2 mt-3">
+        <img class="mt-1" src="/assets/sq_blue-ac500e48.png" />
+        <a class=" whitespace-nowrap" href="/en/bodyparts3d/update.html">Update History of This Database</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+
+    <div>
+      <h1 class="font-bold text-base pl-2 py-1
+           border-l-16 border-b-1 border-blue-700 bg-gray-200">
+  License
+</h1>
+
+      <div class="tinymce-content" style="font-size: 0.75rem;">
+        <h2>License to Use This Database</h2>
+<div class="lic_update_date">Last updated : 2025/02/27</div>
+<p>You may use this database in compliance with the terms and conditions of the license described below. The license specifies the license terms regarding the use of this database and the requirements you must follow in using this database.<br><br></p>
+<div>
+<a href="https://creativecommons.org/licenses/by/4.0/deed.en"><img style="border: 0px solid; width: 88px; height: 31px;" alt="Creative Commons License" src="http://i.creativecommons.org/l/by/4.0/88x31.png"></a><br> The license for this database is specified in the <span class="bold">Creative Commons Attribution 4.0 International.</span><br> If you use data from this database, please be sure attribute this database as follows: <span class="bold">"BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International".</span><br><br> The summary of the Creative Commons Attribution 4.0 International is found <a href="https://creativecommons.org/licenses/by/4.0/legalcode.en" rel="external">here</a>.<br><br> With regard to this database, you are licensed to:<br><br><ol>
+<li>freely access part or whole of this database, and acquire data;</li>
+<li>freely redistribute part or whole of the data from this database; and</li>
+<li>freely create and distribute database and other derivative works based on part or whole of the data from this database,</li>
+</ol>under the license, as long as you comply with the following conditions:<br><br><ol>
+<li>You must attribute this database in the manner specified by the author or licensor when distributing part or whole of this database or any adapted material.</li>
+<li>You need to contact the Licensor shown below to request a license for use of this database or any part thereof not licensed under the license.</li>
+</ol>
+<p class="indent1"><br>Database Center for Life Science<br> Research Organization of Information and Systems<br><br> E-mail : <img alt="bodyparts3d_address" src="/images/dbarchive_images/mail_address/bodyparts3d_address.png" width="178" style="height: 18px;"></p>
+</div>
+
+      </div>
+    </div>
+
+</div>
+</div>
+
+    </main>
+    <footer class="mt-5 py-10 bg-[#f9f8f5]">
+      <div class="flex gap-20 justify-center text-sm">
+  <div class="text-center">
+    <img alt="NBDC Logo" class="w-[150px] h-[50px] block mx-auto" src="/assets/nbdclogo_web_standard_rgb-20a945c7.svg" />
+    <div class="mt-3">
+      <p class="text-xs text-gray-600">
+        Japan Science and Technology Agency <br/> Department for Information Infrastructure
+      </p>
+      <p class="">Office of NBDC Program</p>
+    </div>
+  </div>
+
+  <div class="text-xs text-gray-600">
+    <div>
+      <p>5-3, Science Plaza 7F,</p>
+      <p class="mt-1">Yonbancho, Chiyoda-ku,</p>
+      <p class="mt-1">Tokyo 102-8666 Japan</p>
+    </div>
+    <div class="mt-3">
+      <p>Tel. 03-5214-8491</p>
+      <p class="mt-1">Fax. 03-5214-8470</p>
+    </div>
+  </div>
+</div>
+
+    </footer>
+  </body>
+</html>

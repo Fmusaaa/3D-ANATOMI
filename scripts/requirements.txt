@@ -1,0 +1,11 @@
+# Pipeline data offline (PRD §5.1). Tidak masuk bundle web.
+# Catatan: PRD menargetkan Python 3.11; mesin dev ini 3.13 (lihat DECISIONS.md D-004).
+
+numpy>=1.26
+trimesh>=4.4
+
+# Decimation. fast-simplification adalah pilihan utama: wheel-nya ringan dan
+# ikut Python terbaru. pymeshlab dipasang hanya kalau dibutuhkan untuk
+# perbaikan mesh lanjutan — wheel-nya sering telat mendukung Python baru.
+fast-simplification>=0.1.7
+# pymeshlab>=2023.12   # aktifkan kalau 03_decimate.py butuh filter MeshLab

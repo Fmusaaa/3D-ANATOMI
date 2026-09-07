@@ -1,0 +1,44 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# === Corpus: pipeline data (PRD §6.2) ===
+# Data mentah BodyParts3D & hasil antara TIDAK di-commit. Regenerate lewat
+# `npm run data:download` + `npm run data:build`.
+data_raw/
+data_interim/
+public/data/geometry/*.atlas
+public/data/manifest.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Test & perf artifacts
+test-results/
+playwright-report/
+coverage/
+public/data/content/structures.json
