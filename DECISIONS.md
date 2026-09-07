@@ -313,3 +313,14 @@ kalau tidak ada.
 Yang dipakai: `EXT_disjoint_timer_query_webgl2` — nanodetik GPU sungguhan.
 Semua query diterbitkan lebih dulu lalu dipanen sekali, karena tab tersembunyi
 juga meng-clamp `setTimeout` ke >=1 detik.
+
+## D-014 — Pass transparan dimatikan saat tidak ada struktur transparan
+
+**Tanggal:** 7 September 2026 · **Fase:** F1 · **Status:** diterapkan
+
+Tindak lanjut temuan D-013. `StateTexture` melacak berapa struktur yang
+opacity-nya < 0,99, dan `BatchManager.syncTransparentPass()` menyalakan mesh
+pass kedua hanya kalau jumlah itu > 0.
+
+Terverifikasi di aplikasi: dengan semua struktur opaque, dev overlay menunjukkan
+**33 draw call** (bukan 66) dan baris "pass transparan: mati".

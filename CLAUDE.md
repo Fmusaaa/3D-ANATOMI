@@ -5,7 +5,8 @@ BodyParts3D (~2.200+ mesh, 15 sistem organ). Target user: **mahasiswa kedokteran
 Indonesia** — bukan viewer umum. Baca `PRD.md` untuk spesifikasi lengkap; file
 ini cuma aturan main yang wajib diingat tiap sesi.
 
-**Status saat ini: Fase 0 (pipeline data).** Belum ada kode viewer.
+**Status saat ini: Fase 1 (renderer inti).** Pipeline data selesai; renderer
+menampilkan model lengkap dengan orbit, preset view, dan dev overlay.
 
 ---
 
@@ -46,9 +47,39 @@ Batas modul di atas **ditegakkan ESLint**, bukan cuma niat — lihat
 | `npm run data:download` | Unduh + verifikasi BodyParts3D ke `data_raw/` |
 | `npm run data:build` | Pipeline Python penuh → `.atlas` + manifest |
 | `npm run validate` | Validasi data (§11.3). Wajib lulus sebelum commit |
+| `npm run test:data` | 3 suite test data |
 
 Pipeline Python jalan di `scripts/` — **skrip offline, tidak masuk bundle.**
 Butuh venv sendiri: `pip install -r scripts/requirements.txt`.
+
+## Peta modul viewer
+
+| File | Tanggung jawab |
+|---|---|
+| `AtlasRenderer.ts` | Pemilik renderer/scene/kamera. Render on-demand. Satu-satunya pintu masuk loop: `requestRender()` |
+| `BatchManager.ts` | Geometri + material per batch. Palet sistem. Skip pass transparan |
+| `StateTexture.ts` | State per struktur (visible/select/opacity/system) |
+| `CameraController.ts` | OrbitControls, preset, fly-to sferis, batas zoom |
+| `loaders/AtlasLoader.ts` | Parse `.atlas`, tolak file rusak dengan pesan jelas |
+| `shaders/atlasChunks.ts` | Potongan GLSL. `octDecode` WAJIB pakai `signNotZero` |
+| `types.ts`, `events.ts` | **Satu-satunya** yang boleh diimpor `src/components/**` |
+
+`src/app/AtlasViewer.tsx` adalah SATU-SATUNYA pemilik instance `AtlasRenderer`.
+Diletakkan di `src/app/` karena §5.5 melarang `src/components/**` menyentuh
+viewer di luar `types.ts`/`events.ts`.
+
+## Jebakan yang sudah memakan waktu
+
+- **`onBeforeCompile` + `customProgramCacheKey`**: kunci cache WAJIB unik per
+  batch. Kunci yang sama membuat three memanggil `onBeforeCompile` sekali saja,
+  jadi batch berikutnya tidak pernah mendapat `quantScale`/`quantOffset`-nya.
+- **`objectNormal` harus dideklarasikan di `beginnormal_vertex`**, bukan
+  `begin_vertex`. `defaultnormal_vertex` memakainya dan berjalan lebih dulu.
+- **Cache Vite basi** setelah menambah dependensi 3D bisa menyajikan modul lama
+  dan memunculkan error shader yang sudah diperbaiki. `rm -rf node_modules/.vite`.
+- **Statistik dev overlay tidak boleh hanya di-push dari render loop.** Kalau
+  loop berhenti, angkanya membeku dan justru menyembunyikan bukti idle. Ada
+  detak `setInterval` terpisah yang hanya meng-emit, tidak pernah merender.
 
 ## Jangan
 
