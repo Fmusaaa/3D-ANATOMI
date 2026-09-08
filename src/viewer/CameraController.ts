@@ -210,6 +210,27 @@ export class CameraController {
     return changed
   }
 
+  /** Snapshot untuk deep link (§E14 AC1). */
+  getState(): { position: [number, number, number]; target: [number, number, number] } {
+    const p = this.camera.position
+    const t = this.controls.target
+    return { position: [p.x, p.y, p.z], target: [t.x, t.y, t.z] }
+  }
+
+  /**
+   * Pulihkan framing dari deep link (§E14 AC3) — tanpa animasi.
+   *
+   * Membuka sebuah tautan harus mendarat langsung di tampilan yang dimaksud;
+   * menerbangkan kamera dari posisi default justru bikin bingung dan bisa
+   * berakhir di tempat lain kalau animasinya keburu diinterupsi.
+   */
+  setState(position: [number, number, number], target: [number, number, number]): void {
+    this.anim = null
+    this.camera.position.set(position[0], position[1], position[2])
+    this.controls.target.set(target[0], target[1], target[2])
+    this.controls.update()
+  }
+
   resize(width: number, height: number): void {
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()

@@ -467,3 +467,47 @@ tanpa error, tanpa umpan balik. Dari sisi user terlihat seperti aplikasi hang.
 Diperbaiki dengan menjepit index aktif ke panjang hasil saat ini
 (`activeIndex`), bukan mengandalkan `setActive(0)` yang bisa didahului
 `onMouseEnter`.
+
+## D-022 — Hash URL ditulis dari aksi diskrit, bukan dari gerakan kamera
+
+**Tanggal:** 7 September 2026 · **Fase:** F3 (E14) · **Status:** diterapkan
+
+`location.hash` di-update saat terjadi aksi diskrit (pilih struktur, toggle
+sistem, ganti preset, klik "Salin tautan") — **bukan** setiap frame kamera
+bergerak.
+
+Menulis hash 60x/detik saat orbit akan membanjiri riwayat browser dan membuat
+tombol Back tidak terpakai. Posisi kamera tetap ikut terekam, karena dibaca
+pada momen-momen diskrit itu. Konsekuensi jujurnya: orbit lalu langsung menyalin
+tautan tetap benar (klik tombolnya sendiri memicu penulisan), tapi orbit lalu
+menekan Back tidak mengembalikan sudut pandang sebelumnya.
+
+Dipakai `history.replaceState`, bukan `pushState`: satu toggle sistem tidak
+layak jadi entri riwayat tersendiri.
+
+## D-023 — Sorotan preset diverifikasi terhadap state, bukan dipercaya dari URL
+
+**Tanggal:** 7 September 2026 · **Fase:** F3 · **Status:** diperbaiki
+
+Saat memulihkan deep link, `p=<preset>` sempat dipakai langsung untuk menyorot
+tombol preset. Akibatnya tautan bisa menyorot "Semua" sementara yang benar-benar
+tampil hanya organ dalam — tombolnya berbohong soal apa yang sedang dilihat.
+
+Sekarang sorotan hanya diberikan kalau himpunan sistem yang dipulihkan
+benar-benar cocok dengan definisi preset itu. Kalau tidak cocok, tidak ada yang
+disorot. Bitmask sistem adalah sumber kebenaran; `p=` cuma petunjuk tampilan.
+
+## D-024 — Clipboard bisa ditolak; URL selalu ada di address bar
+
+**Tanggal:** 7 September 2026 · **Fase:** F3 · **Status:** diterapkan
+
+`navigator.clipboard.writeText` bisa gagal (izin ditolak, konteks tidak aman,
+browser lama). Terverifikasi gagal di lingkungan otomasi dengan
+`NotAllowedError: Write permission denied`.
+
+Karena `writeHash()` selalu memperbarui address bar lebih dulu, jalur mundurnya
+nyata: toast mengarahkan user menyalin dari address bar, bukan sekadar
+memberi tahu bahwa sesuatu gagal.
+
+⚠️ **Jalur sukses tombol salin belum terverifikasi** — lingkungan uji memblokir
+clipboard sepenuhnya. Perlu dicoba manual di browser biasa.

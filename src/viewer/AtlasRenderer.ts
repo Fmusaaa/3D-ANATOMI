@@ -292,6 +292,54 @@ export class AtlasRenderer {
     }
   }
 
+  /** §E14 AC1: snapshot untuk di-encode ke URL. */
+  cameraState(): { position: [number, number, number]; target: [number, number, number] } | null {
+    return this.camera?.getState() ?? null
+  }
+
+  currentSelection(): number[] {
+    return [...this.selection]
+  }
+
+  /**
+   * §E14 AC3: pulihkan state dari deep link.
+   *
+   * Visibilitas diterapkan TANPA animasi fade — membuka tautan seharusnya
+   * langsung mendarat di tampilan yang dimaksud, bukan menonton 180 ms fade
+   * dari tampilan default yang bukan maksud siapa pun.
+   */
+  restore(state: {
+    cameraPosition: [number, number, number]
+    cameraTarget: [number, number, number]
+    visibleSystems: string[]
+    opacities: Record<string, number>
+    selection: number[]
+  }): void {
+    const vis = this.visibility
+    if (vis) {
+      const wanted = new Set(state.visibleSystems)
+      for (const sys of vis.snapshot()) {
+        const visible = wanted.has(sys.id)
+        const opacity = state.opacities[sys.id] ?? 1
+        vis.setSystem(sys.id, { visible, opacity, ghosted: false })
+      }
+      // Tuntaskan fade seketika: tidak ada yang mau menunggu animasi saat
+      // membuka tautan.
+      vis.update(Number.POSITIVE_INFINITY)
+      this.state?.flush()
+      this.batches?.syncTransparentPass()
+      this.events.emit('systems', vis.snapshot())
+    }
+
+    this.clearSelection()
+    for (const idx of state.selection.slice(0, MAX_SELECTION)) {
+      if (idx >= 0 && idx < this.structureCount) this.select(idx, true)
+    }
+
+    this.camera?.setState(state.cameraPosition, state.cameraTarget)
+    this.requestRender()
+  }
+
   systems(): SystemState[] {
     return this.visibility?.snapshot() ?? []
   }

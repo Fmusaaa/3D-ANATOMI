@@ -10,7 +10,7 @@
  * state per-frame yang masuk React.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   SYSTEM_LABEL,
   loadStructures,
@@ -23,7 +23,9 @@ import { DevOverlay } from '@/components/DevOverlay/DevOverlay'
 import { SearchBar } from '@/components/SearchBar/SearchBar'
 import { SystemTree } from '@/components/SystemTree/SystemTree'
 import { ViewToolbar } from '@/components/ViewToolbar/ViewToolbar'
+import { decodeState, encodeState } from '@/lib/deeplink'
 import { AtlasRenderer } from '@/viewer/AtlasRenderer'
+import { SYSTEM_ORDER } from '@/viewer/BatchManager'
 import { VISIBILITY_PRESETS } from '@/viewer/presets'
 import type {
   HoverInfo,
@@ -49,6 +51,9 @@ export function AtlasViewer() {
   const [selection, setSelection] = useState<number[]>([])
   /** Toast §E5 AC7: beri tahu kalau sebuah sistem otomatis ditampilkan lagi. */
   const [toast, setToast] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  /** Hash awal dibaca SEKALI, sebelum apa pun sempat menimpanya. */
+  const initialHash = useRef(typeof window === 'undefined' ? '' : window.location.hash)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -63,6 +68,24 @@ export function AtlasViewer() {
       renderer.events.on('ready', () => {
         setReady(true)
         setProgress(null)
+        // §E14 AC3: pulihkan state SETELAH geometri siap — sebelum itu
+        // structureCount masih 0 dan seleksi akan ditolak diam-diam.
+        const restored = decodeState(initialHash.current, SYSTEM_ORDER)
+        if (restored) {
+          renderer.restore(restored)
+          // Sorot preset HANYA kalau himpunan sistem yang dipulihkan memang
+          // cocok dengan definisinya. Tanpa cek ini, tautan bisa menyorot
+          // "Semua" sementara yang tampil cuma organ dalam — tombolnya
+          // berbohong soal apa yang sedang dilihat.
+          const preset = VISIBILITY_PRESETS.find((x) => x.id === restored.presetId)
+          const shown = new Set(restored.visibleSystems)
+          const expected = new Set([...preset?.show ?? [], ...preset?.ghost ?? []])
+          const cocok =
+            preset !== undefined &&
+            shown.size === expected.size &&
+            [...shown].every((id) => expected.has(id))
+          setActivePreset(cocok ? restored.presetId : null)
+        }
       }),
       renderer.events.on('systems', setSystems),
       renderer.events.on('hover', setHover),
@@ -111,6 +134,61 @@ export function AtlasViewer() {
   const handleVisibilityPreset = (presetId: string): void => {
     rendererRef.current?.applyPreset(presetId)
     setActivePreset(presetId)
+  }
+
+  /**
+   * Tulis state ke URL hash.
+   *
+   * Dipanggil dari aksi diskrit (pilih struktur, toggle sistem, salin tautan),
+   * BUKAN dari gerakan kamera per-frame — menulis `location.hash` 60x/detik
+   * akan membanjiri riwayat browser dan bikin tombol Back tidak terpakai.
+   * Posisi kamera ikut terbaca saat momen-momen itu terjadi.
+   */
+  const writeHash = useCallback((): string => {
+    const r = rendererRef.current
+    const cam = r?.cameraState()
+    if (!r || !cam) return window.location.href
+    const encoded = encodeState(
+      {
+        cameraPosition: cam.position,
+        cameraTarget: cam.target,
+        visibleSystems: systems.filter((x) => x.visible).map((x) => x.id),
+        opacities: Object.fromEntries(
+          systems.filter((x) => x.opacity !== 1).map((x) => [x.id, x.opacity]),
+        ),
+        selection: r.currentSelection(),
+        presetId: activePreset,
+      },
+      SYSTEM_ORDER,
+    )
+    // replaceState, bukan pushState: tiap toggle tidak layak jadi entri riwayat.
+    window.history.replaceState(null, '', `#${encoded}`)
+    return `${window.location.origin}${window.location.pathname}#${encoded}`
+  }, [systems, activePreset])
+
+  useEffect(() => {
+    if (ready) writeHash()
+  }, [ready, writeHash, selection])
+
+  const handleCopyLink = (): void => {
+    const url = writeHash()
+    void navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        setCopied(true)
+        setTimeout(() => {
+          setCopied(false)
+        }, 1800)
+      })
+      .catch(() => {
+        // Clipboard bisa ditolak (izin, konteks tidak aman, browser lama).
+        // URL-nya sendiri SUDAH ditulis ke address bar oleh writeHash(), jadi
+        // arahkan ke sana alih-alih cuma bilang "gagal".
+        setToast('Clipboard diblokir browser — salin URL dari address bar')
+        setTimeout(() => {
+          setToast(null)
+        }, 4000)
+      })
   }
 
   const hiddenSystems = new Set(systems.filter((x) => !x.visible).map((x) => x.id))
@@ -200,6 +278,17 @@ export function AtlasViewer() {
       {/* Tooltip disembunyikan saat panel detail terbuka supaya tidak menumpuk. */}
       {hover && selected.length === 0 && (
         <HoverTooltip structure={hovered} x={hover.clientX} y={hover.clientY} />
+      )}
+
+      {ready && (
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          title="Salin tautan tampilan ini"
+          className="pointer-events-auto absolute top-3 right-3 z-20 rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-[12px] text-white/60 backdrop-blur hover:text-white/95"
+        >
+          {copied ? 'Tersalin ✓' : 'Salin tautan'}
+        </button>
       )}
 
       {ready && <ViewToolbar onPreset={handlePreset} onReset={handleReset} />}
