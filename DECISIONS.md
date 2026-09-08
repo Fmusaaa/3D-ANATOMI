@@ -791,3 +791,108 @@ ada di dataset, sebagian regio hasil tebakan spasial.
 
 Atribusi footer disembunyikan di layar sempit (menutupi kanvas); di sana
 atribusinya ada di halaman Tentang.
+
+## D-038 — Service worker ditulis tangan, bukan workbox
+
+**Tanggal:** 8 September 2026 · **Fase:** F9 · **Status:** diterapkan
+
+Alasannya bukan anti-dependency. Default `generateSW` milik workbox adalah
+mem-precache SELURUH aset build — di proyek ini artinya menelan 32 MB geometri
+saat service worker dipasang, tanpa user pernah memintanya. Untuk mahasiswa
+yang membuka dari kuota HP itu tidak bisa diterima, dan kebijakan yang benar
+cukup ~160 baris.
+
+Kebijakannya:
+
+| Aset | Strategi | Alasan |
+|---|---|---|
+| cangkang app (~1 MB) | precache saat install | syarat minimum bisa jalan offline |
+| `manifest.json` + content JSON (~0,9 MB) | precache, lalu stale-while-revalidate | tanpa ini offline cuma layar kosong |
+| `geometry/*.atlas` (32 MB) | cache saat benar-benar dipakai + unduhan yang dipilih user | tidak pernah diunduh diam-diam |
+| navigasi | network-first, fallback cache | cache-first mengunci user di build rusak tanpa jalan keluar |
+
+Nama cache data **tidak** ikut build id, melainkan hash `manifest.json`. Kalau
+ikut build, tiap deploy kecil (ubah warna tombol) akan membuang 32 MB yang
+sudah diunduh user. Sudah diuji: setelah pembaruan, cache cangkang lama dibuang
+dan 26 berkas geometri tetap utuh.
+
+`skipWaiting()` tidak pernah otomatis. Menukar bundle di bawah tab yang sedang
+jalan bisa mematahkan lazy-chunk yang sudah tidak ada di build baru — halaman
+menampilkan tawaran "Muat ulang", user yang memutuskan.
+
+### Dua jebakan yang cuma muncul saat benar-benar offline
+
+**1. `Vary: Origin` membuat halaman PUTIH TOTAL.**
+
+Server statis (vite preview, dan banyak CDN) mengirim `Vary: Origin`. Dengan
+header itu `cache.match` menuntut header Origin permintaan sama persis dengan
+saat disimpan. Vite menandai `<script type="module">` dan `<link rel=stylesheet>`
+dengan atribut `crossorigin`, jadi permintaan asli browser MEMBAWA Origin
+sementara `cache.addAll` di service worker tidak — pencarian meleset, jatuh ke
+jaringan, dan offline itu berarti `ERR_FAILED`.
+
+Yang membuat ini sulit dilihat: `fetch()` manual dari konsol tetap BERHASIL
+(permintaan itu juga tanpa Origin), jadi cache tampak sehat. Yang gagal hanya
+pemuatan js/css oleh parser HTML — **tanpa satu pun exception JavaScript**.
+Perbaikannya `{ ignoreVary: true }` di setiap pencarian cache.
+
+**2. File di cache yang benar, tapi dicari di cache yang salah.**
+
+`manifest.json` dan content JSON sempat ikut di-precache ke cache *cangkang*,
+padahal handler `/data/` mencarinya di cache *data*. Hasilnya: file ada, tapi
+tidak ketemu, lalu jatuh ke jaringan. Online tidak terlihat sama sekali; offline
+memunculkan "Gagal memuat atlas — Failed to fetch" padahal 33 berkas geometri
+berhasil dimuat. Karena itu daftar precache dipisah jadi `SHELL` dan
+`DATA_SHELL`.
+
+Konsekuensi lain yang ikut diperbaiki: "Hapus data tersimpan" semula memanggil
+`caches.delete(DATA_CACHE)` — yang ikut menghapus manifest + content, jadi
+tombol itu diam-diam mematikan kemampuan offline app, bukan cuma mengosongkan
+geometri. Sekarang hanya entri geometri yang dihapus.
+
+**Pelajaran metodologi:** tiga bug di atas semuanya lolos dari pengujian online.
+Satu-satunya yang menemukannya adalah mematikan server sungguhan lalu memuat
+ulang. Untuk fitur offline, itu bukan uji tambahan — itu satu-satunya uji yang
+berarti.
+
+## D-039 — Atlas memuat SELURUH geometri saat dibuka
+
+**Tanggal:** 8 September 2026 · **Fase:** F9 · **Status:** tercatat, belum diubah
+
+Ditemukan saat menguji E12: `AtlasRenderer.load()` melakukan iterasi ke seluruh
+33 batch di manifest dan memuat semuanya sebelum app bisa dipakai. Jadi
+kunjungan pertama memang mengunduh 32 MB, ada tidaknya panel offline.
+
+Ini mengubah arti fitur E12, dan panel-nya ditulis ulang supaya jujur: yang
+dicegah kebijakan cache adalah unduhan KEDUA sebesar itu di latar belakang saat
+service worker dipasang — bukan unduhan pertamanya. Panel yang berpura-pura
+menawarkan pilihan yang sebenarnya sudah terjadi itu menyesatkan.
+
+Konsekuensi yang belum diselesaikan: anggaran performa §11 menyebut FCP/TTI di
+4G ter-throttle. 32 MB sebelum layar pertama hampir pasti melanggarnya. Yang
+masuk akal adalah memuat sistem sesuai preset awal dulu, sisanya menyusul —
+tapi itu perubahan pada jalur muat inti, bukan pekerjaan F9. Diserahkan sebagai
+keputusan, bukan diam-diam diubah.
+
+Catatan angka: 32,2 MB mentah, 18,9 MB kalau disajikan ter-brotli (sudah
+dihitung pipeline di `bytesBrotli`). File di disk masih mentah dan Vercel tidak
+otomatis mengompres `application/octet-stream`, jadi separuh penghematan itu
+masih tergeletak — dicatat sebagai peluang terukur, bukan tebakan.
+
+## D-040 — Konfigurasi deploy Vercel
+
+**Tanggal:** 8 September 2026 · **Fase:** F9 · **Status:** diterapkan (belum di-deploy)
+
+`vercel.json` menetapkan rewrite SPA dan header cache. Yang penting bukan
+"tambah header supaya cepat", tapi memastikan tiap kelas aset punya umur yang
+benar:
+
+- `/assets/*` dan `/data/geometry/*` → `immutable, max-age=1 tahun`. Nama aset
+  build ber-hash; geometri diberi versi lewat nama cache service worker.
+- `/sw.js` dan `/index.html` → `max-age=0, must-revalidate`. Service worker yang
+  ter-cache lama adalah cara paling umum membuat user terjebak di versi lama
+  dan tidak bisa dipulihkan dari jarak jauh.
+- `/data/manifest.json` dan content JSON → 5 menit.
+
+⚠️ Deploy publik pertama masih tertahan D-005 (konflik lisensi BodyParts3D).
+Konfigurasinya siap; keputusannya bukan keputusan teknis.

@@ -31,6 +31,8 @@ import { BottomSheet, type SheetStop } from '@/components/Mobile/BottomSheet'
 import { Drawer } from '@/components/Mobile/Drawer'
 import { detectCapability, useIsMobile, type DeviceCapability } from '@/lib/device'
 import { AboutPanel, ATTRIBUTION_SHORT } from '@/components/About/AboutPanel'
+import { OfflinePanel } from '@/components/Offline/OfflinePanel'
+import { useOffline } from '@/lib/offline'
 import { ThemeToggle } from '@/components/ThemeToggle/ThemeToggle'
 import { CANVAS_BG, useTheme } from '@/lib/theme'
 import { ExplodeControl } from '@/components/ExplodeControl/ExplodeControl'
@@ -71,6 +73,8 @@ export function AtlasViewer() {
   const [language, setLanguage] = useState<LanguageCode>(DEFAULT_LANGUAGE)
   const [showContrib, setShowContrib] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
+  const [showOffline, setShowOffline] = useState(false)
+  const offline = useOffline()
   const [modelStats, setModelStats] = useState<{ structures: number; triangles: number } | null>(null)
   const [explode, setExplode] = useState(0)
   const { choice: themeChoice, resolved: theme, setChoice: setTheme } = useTheme()
@@ -423,7 +427,12 @@ export function AtlasViewer() {
       )}
 
       {ready && (
-        <div className="pointer-events-none absolute top-3 right-3 z-20 flex items-center gap-2">
+        /*
+          Wajib flex-wrap: di 375 px baris ini meluap ke kiri dan memotong
+          pemilih tema (§E11 AC1 — semua kontrol harus terjangkau di layar
+          sempit, bukan cuma "ada di DOM").
+        */
+        <div className="pointer-events-none absolute top-3 right-3 z-20 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2">
           <ThemeToggle value={themeChoice} onChange={setTheme} />
           <LanguageToggle value={language} onChange={setLanguage} coverage={coverage} />
           <button
@@ -439,24 +448,46 @@ export function AtlasViewer() {
           <button
             type="button"
             onClick={() => {
+              setShowOffline(true)
+            }}
+            title={
+              offline.online
+                ? 'Simpan untuk offline (§E12)'
+                : 'Sedang offline — hanya sistem tersimpan yang bisa dibuka'
+            }
+            aria-label="Simpan untuk offline"
+            className="pointer-events-auto rounded-lg border border-panel-border bg-panel px-3 py-2 text-[12px] text-panel-muted backdrop-blur hover:text-panel-fg"
+          >
+            {/* Status offline TIDAK hanya dibedakan warna — §E11 AC8. */}
+            <span aria-hidden="true">{offline.online ? '⤓' : '⚡'}</span>
+            <span className="sr-only">
+              {offline.online ? 'online' : 'offline'}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
               setShowAbout(true)
             }}
             className="pointer-events-auto rounded-lg border border-panel-border bg-panel px-3 py-2 text-[12px] text-panel-muted backdrop-blur hover:text-panel-fg"
           >
             Tentang
           </button>
+          {/*
+            Dulu tombol ini diposisikan absolut di `top-16`. Begitu baris di
+            atasnya boleh membungkus, posisi tetap itu bertabrakan dengannya —
+            separuh tombol "Tentang" jadi tidak bisa diklik di 375 px. Ikut
+            membungkus adalah satu-satunya posisi yang tidak bisa tabrakan.
+          */}
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            title="Salin tautan tampilan ini"
+            className="pointer-events-auto rounded-lg border border-panel-border bg-panel px-3 py-2 text-[12px] text-panel-muted backdrop-blur hover:text-panel-fg"
+          >
+            {copied ? 'Tersalin ✓' : 'Salin tautan'}
+          </button>
         </div>
-      )}
-
-      {ready && (
-        <button
-          type="button"
-          onClick={handleCopyLink}
-          title="Salin tautan tampilan ini"
-          className="pointer-events-auto absolute top-16 right-3 z-20 rounded-lg border border-panel-border bg-panel px-3 py-2 text-[12px] text-panel-muted backdrop-blur hover:text-panel-fg"
-        >
-          {copied ? 'Tersalin ✓' : 'Salin tautan'}
-        </button>
       )}
 
       {ready && !isMobile && (
@@ -469,6 +500,35 @@ export function AtlasViewer() {
       )}
 
       {ready && <ViewToolbar onPreset={handlePreset} onReset={handleReset} />}
+
+      {showOffline && (
+        <OfflinePanel
+          onClose={() => {
+            setShowOffline(false)
+          }}
+        />
+      )}
+
+      {/*
+        §E12: pembaruan tidak pernah dipaksakan. Menukar bundle di bawah tab
+        yang sedang dipakai bisa mematahkan lazy-chunk yang sudah tidak ada di
+        build baru — user yang memutuskan kapan memuat ulang.
+      */}
+      {offline.updateReady && (
+        <div
+          role="status"
+          className="pointer-events-auto absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-panel-border bg-panel px-4 py-2.5 text-[12.5px] text-panel-fg backdrop-blur"
+        >
+          <span>Versi baru sudah siap.</span>
+          <button
+            type="button"
+            onClick={offline.applyUpdate}
+            className="rounded bg-panel-inverse px-2.5 py-1 text-[12px] font-medium text-panel-inverse-fg hover:opacity-90"
+          >
+            Muat ulang
+          </button>
+        </div>
+      )}
 
       {showAbout && (
         <AboutPanel

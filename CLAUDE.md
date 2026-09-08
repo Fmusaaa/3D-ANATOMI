@@ -51,6 +51,7 @@ Batas modul di atas **ditegakkan ESLint**, bukan cuma niat — lihat
 | `python scripts/06_nomenclature.py` | Turunkan nomenklatur (semua `machine`) |
 | `npm run test:data` | 3 suite test data (Python) |
 | `npm test` | Unit test Vitest |
+| `npm run preview` | Serve build produksi (port 4173). **Satu-satunya cara menguji service worker** — di `dev` sengaja dimatikan |
 
 Pipeline Python jalan di `scripts/` — **skrip offline, tidak masuk bundle.**
 Butuh venv sendiri: `pip install -r scripts/requirements.txt`.
@@ -69,6 +70,10 @@ Butuh venv sendiri: `pip install -r scripts/requirements.txt`.
 | `loaders/AtlasLoader.ts` | Parse `.atlas`, tolak file rusak dengan pesan jelas |
 | `shaders/atlasChunks.ts` | Potongan GLSL. `octDecode` WAJIB pakai `signNotZero` |
 | `types.ts`, `events.ts` | **Satu-satunya** yang boleh diimpor `src/components/**` |
+
+`src/sw/service-worker.js` bukan modul bundle: di-emit apa adanya oleh plugin
+`corpus-service-worker` di `vite.config.ts`, yang mengisi `__SHELL__`,
+`__DATA_SHELL__`, `__BUILD__`, dan `__DATA_VERSION__` saat build.
 
 `src/app/AtlasViewer.tsx` adalah SATU-SATUNYA pemilik instance `AtlasRenderer`.
 Diletakkan di `src/app/` karena §5.5 melarang `src/components/**` menyentuh
@@ -93,6 +98,14 @@ viewer di luar `types.ts`/`events.ts`.
   Fade visibilitas menggantung dan tinggi elemen membeku di nilai sebelum
   transisi — AC terlihat gagal padahal tidak. Sebelum menyimpulkan ada bug,
   jalankan `el.getAnimations().forEach(a => a.finish())`. Lihat D-018 & D-034.
+- **Fitur offline HANYA terbukti dengan mematikan server sungguhan.** Tiga bug
+  service worker lolos dari seluruh pengujian online: `Vary: Origin` bikin
+  `cache.match` meleset (halaman putih, tanpa exception), precache masuk cache
+  yang salah, dan "hapus data" ikut menghapus manifest. Semua `cache.match`
+  WAJIB pakai `{ ignoreVary: true }` (D-038).
+- **`fetch()` dari konsol BUKAN bukti cache sehat.** Permintaan itu tidak
+  membawa header Origin; permintaan asli browser untuk `<script crossorigin>`
+  membawanya. Yang satu ketemu di cache, yang satunya tidak.
 - **Jangan pakai warna hardcoded (`bg-black`, `text-white`) di komponen.**
   Pakai token tema (`bg-panel`, `text-panel-fg`, `text-panel-muted`, ...) —
   warna hardcoded hanya benar di satu tema (D-035). Palet 13 sistem organ

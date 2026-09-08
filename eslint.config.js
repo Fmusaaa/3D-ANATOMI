@@ -143,6 +143,23 @@ export default tseslint.config(
     },
   },
 
+  // Service worker: bukan modul bundle. Global-nya beda (self, caches,
+  // clients), dan tiga placeholder di bawah baru diisi saat build oleh
+  // plugin `corpus-service-worker` di vite.config.ts.
+  {
+    files: ['src/sw/**/*.js'],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: {
+        ...globals.serviceworker,
+        __SHELL__: 'readonly',
+        __DATA_SHELL__: 'readonly',
+        __BUILD__: 'readonly',
+        __DATA_VERSION__: 'readonly',
+      },
+    },
+  },
+
   // Config files: tanpa type-checking project service.
   {
     files: ['*.config.{js,ts}', 'eslint.config.js'],

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
+import { registerServiceWorker } from './lib/offline'
 import './index.css'
 
 // §8.1 gelap secara default. Dipasang di sini (sebelum React mount) supaya
@@ -17,6 +18,10 @@ try {
 } catch {
   document.documentElement.classList.add('dark')
 }
+
+// §E12. No-op di dev: service worker yang meng-cache modul dev bertabrakan
+// dengan HMR dan memunculkan "bug" yang sebenarnya cuma file basi.
+registerServiceWorker()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
