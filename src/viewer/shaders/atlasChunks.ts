@@ -27,15 +27,25 @@ vec3 octDecode(vec2 e) {
 }
 `
 
-/** Lookup state per struktur dari DataTexture (§5.3.2). */
+/** Lookup state & transform per struktur dari DataTexture (§5.3.2). */
 export const STATE_LOOKUP_GLSL = /* glsl */ `
 uniform sampler2D uStateTex;
+uniform sampler2D uXformTex;
 uniform float uStateTexHeight;
 
-vec4 readState(float idx) {
+vec2 atlasTexUV(float idx) {
   float x = mod(idx, 256.0) + 0.5;
   float y = floor(idx / 256.0) + 0.5;
-  return texture2D(uStateTex, vec2(x / 256.0, y / uStateTexHeight));
+  return vec2(x / 256.0, y / uStateTexHeight);
+}
+
+vec4 readState(float idx) {
+  return texture2D(uStateTex, atlasTexUV(idx));
+}
+
+/** RGB = offset explode (meter), A = skala (dicadangkan). */
+vec4 readXform(float idx) {
+  return texture2D(uXformTex, atlasTexUV(idx));
 }
 `
 
@@ -79,6 +89,9 @@ export const VERTEX_BODY = /* glsl */ `
   vSystemId    = state.a;
 
   vec3 transformed = position * uQuantScale + uQuantOffset;
+  // Exploded view (§E6): geser struktur ke posisi tujuannya. Geometri tidak
+  // pernah dibangun ulang — offset-nya datang dari tekstur (§5.2).
+  transformed += readXform(aStructureIdx).xyz;
 
   if (state.r < 0.5) {
     // Di luar clip space -> ter-cull. Lebih murah daripada membangun ulang index.
@@ -138,21 +151,25 @@ attribute float aStructureIdx;
 uniform vec3 uQuantScale;
 uniform vec3 uQuantOffset;
 uniform sampler2D uStateTex;
+uniform sampler2D uXformTex;
 uniform float uStateTexHeight;
 uniform float uMinPickOpacity;
 
 varying float vIdx;
 
-vec4 readState(float idx) {
+vec2 atlasTexUV(float idx) {
   float x = mod(idx, 256.0) + 0.5;
   float y = floor(idx / 256.0) + 0.5;
-  return texture2D(uStateTex, vec2(x / 256.0, y / uStateTexHeight));
+  return vec2(x / 256.0, y / uStateTexHeight);
 }
 
 void main() {
   vIdx = aStructureIdx;
-  vec4 state = readState(aStructureIdx);
+  vec4 state = texture2D(uStateTex, atlasTexUV(aStructureIdx));
   vec3 p = position * uQuantScale + uQuantOffset;
+  // WAJIB memakai offset yang sama dengan pass tampilan. Kalau tidak, saat
+  // explode aktif klik akan mengenai posisi lama struktur — meleset jauh.
+  p += texture2D(uXformTex, atlasTexUV(aStructureIdx)).xyz;
 
   // §E3 AC10: struktur tersembunyi tidak bisa ter-pick — dicull dengan shader
   // yang sama, jadi mustahil melenceng dari yang terlihat.

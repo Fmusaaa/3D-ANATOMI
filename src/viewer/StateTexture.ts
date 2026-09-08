@@ -29,6 +29,71 @@ export type SelectStateValue = (typeof SelectState)[keyof typeof SelectState]
 
 const WIDTH = 256
 
+/**
+ * Tekstur transformasi per struktur (PRD §5.3.2, `uXformTex`).
+ *
+ *   RGB  offset translasi (meter) — dipakai exploded view
+ *   A    skala; DICADANGKAN untuk animasi pop-out saat hover, belum dipakai
+ *
+ * Dipisah dari `StateTexture` karena beda laju perubahan: state berubah saat
+ * user menoggle sesuatu, xform berubah tiap frame selama animasi explode.
+ * Menyatukannya berarti mengunggah ulang state yang tidak berubah 60x/detik.
+ */
+export class XformTexture {
+  readonly texture: THREE.DataTexture
+  readonly height: number
+  readonly count: number
+
+  private readonly data: Float32Array
+  private dirty = false
+
+  constructor(count: number) {
+    this.count = count
+    this.height = Math.max(1, Math.ceil(count / WIDTH))
+    this.data = new Float32Array(WIDTH * this.height * 4)
+    // Skala default 1; offset default 0.
+    for (let i = 0; i < count; i++) this.data[i * 4 + 3] = 1
+    this.texture = new THREE.DataTexture(
+      this.data,
+      WIDTH,
+      this.height,
+      THREE.RGBAFormat,
+      THREE.FloatType,
+    )
+    this.texture.minFilter = THREE.NearestFilter
+    this.texture.magFilter = THREE.NearestFilter
+    this.texture.generateMipmaps = false
+    this.texture.needsUpdate = true
+  }
+
+  setOffset(idx: number, x: number, y: number, z: number): void {
+    if (idx < 0 || idx >= this.count) return
+    const o = idx * 4
+    if (this.data[o] === x && this.data[o + 1] === y && this.data[o + 2] === z) return
+    this.data[o] = x
+    this.data[o + 1] = y
+    this.data[o + 2] = z
+    this.dirty = true
+  }
+
+  reset(): void {
+    this.data.fill(0)
+    for (let i = 0; i < this.count; i++) this.data[i * 4 + 3] = 1
+    this.dirty = true
+  }
+
+  flush(): boolean {
+    if (!this.dirty) return false
+    this.texture.needsUpdate = true
+    this.dirty = false
+    return true
+  }
+
+  dispose(): void {
+    this.texture.dispose()
+  }
+}
+
 export class StateTexture {
   readonly texture: THREE.DataTexture
   readonly height: number

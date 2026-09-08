@@ -613,3 +613,60 @@ pencarian.
 
 **PRD perlu diupdate** di §E7 AC1 dan §8.2 (mockup panel detail menunjukkan
 "Nervus medianus" besar dengan "Saraf median" kecil di bawahnya).
+
+## D-028 — Layout explode memakai sel seragam supaya non-overlap bisa DIBUKTIKAN
+
+**Tanggal:** 7 September 2026 · **Fase:** F4 (E6) · **Status:** diterapkan
+
+§E6 AC3 menuntut tidak ada tumpang tindih bounding box, **diverifikasi secara
+analitis di unit test, bukan lewat mata**. Itu menentukan pilihan algoritmanya.
+
+Ukuran sel = dimensi bbox TERBESAR di antara struktur yang ikut, seragam untuk
+semua. Dengan begitu non-overlap jadi teorema, bukan hasil uji coba: kalau
+setiap struktur muat dalam kubus `cell` dan pusat sel berjarak minimal
+`cell x (1 + padding)` pada salah satu sumbu, dua AABB mustahil bersinggungan.
+
+Terbukti di `tests/unit/explode.test.ts` untuk 1.000 struktur pada aspect ratio
+16:9, 4:3, dan 9:16 — 499.500 pasang diperiksa per aspect.
+
+**Biayanya nyata dan diterima:** satu struktur raksasa memaksa seluruh grid
+membesar. Dengan kulit ikut terlihat, sel jadi 1,8 m (tinggi tubuh) dan hasil
+explode praktis tidak terbaca. Itu sebabnya §E6 AC8 memperingatkan di atas
+1.200 struktur — explode memang dipakai setelah mengisolasi sistem.
+
+Alternatif sel per-grup menghemat ruang tapi membuat non-overlap kembali jadi
+sesuatu yang diuji-coba, bukan dibuktikan. Ditolak.
+
+## D-029 — Batas zoom kamera harus mengikuti tampilan, bukan ukuran tubuh
+
+**Tanggal:** 7 September 2026 · **Fase:** F4 · **Status:** diperbaiki
+
+`maxDistance` dihitung dari bbox tubuh saat model dimuat (§E2 AC3: seluruh
+tubuh + margin 20%). Exploded view jauh lebih besar dari itu.
+
+Akibatnya: explode aktif, tapi user tidak bisa mundur cukup jauh untuk
+melihatnya. Layar tampak hampir kosong — dan itu terbaca sebagai fitur rusak,
+bukan sebagai batas zoom.
+
+Terukur pada preset Kerangka (255 struktur): `maxDistance` 2,94 m sebelum
+explode, **10,9 m** sesudahnya. Batasnya diinterpolasi mengikuti progres
+explode, jadi saat kembali ke 0% batas zoom ikut mengetat lagi.
+
+## D-030 — Regio per-struktur belum ada di header `.atlas`
+
+**Tanggal:** 7 September 2026 · **Fase:** F4 · **Status:** ⚠️ pembatas kualitas
+
+§E6 AC5 minta urutan penempatan mempertahankan hubungan anatomis:
+regio -> sistem -> koordinat. `ExplodeLayout` sudah mengurutkan begitu dan
+diuji, TAPI `regionId` per struktur hanya ada di `content/structures.json`,
+sementara renderer membangun layout dari header `.atlas` yang cuma memuat
+`systemId`.
+
+Sementara ini `systemId` dipakai sebagai pengelompokan utama. Akibatnya
+pengurutan explode benar per sistem, tapi belum mengelompokkan per regio —
+tulang karpal tidak berkumpul terpisah dari tulang tarsal.
+
+Perbaikannya kecil: tambahkan `region` ke entri struktur di header `.atlas`
+(`04_pack_batches.py`), naikkan versi format, update loader dan validator.
+Belum dikerjakan karena menyentuh format `.atlas` dan CLAUDE.md melarang itu
+dilakukan tanpa menaikkan versi + update loader + validator sekaligus.

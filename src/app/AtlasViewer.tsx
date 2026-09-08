@@ -27,12 +27,13 @@ import {
 } from '@/content/nomenclature'
 import { ContributionPanel } from '@/components/Nomenclature/ContributionPanel'
 import { LanguageToggle } from '@/components/Nomenclature/LanguageToggle'
+import { ExplodeControl } from '@/components/ExplodeControl/ExplodeControl'
 import { DevOverlay } from '@/components/DevOverlay/DevOverlay'
 import { SearchBar } from '@/components/SearchBar/SearchBar'
 import { SystemTree } from '@/components/SystemTree/SystemTree'
 import { ViewToolbar } from '@/components/ViewToolbar/ViewToolbar'
 import { decodeState, encodeState } from '@/lib/deeplink'
-import { AtlasRenderer } from '@/viewer/AtlasRenderer'
+import { AtlasRenderer, EXPLODE_WARN_THRESHOLD } from '@/viewer/AtlasRenderer'
 import { SYSTEM_ORDER } from '@/viewer/BatchManager'
 import { VISIBILITY_PRESETS } from '@/viewer/presets'
 import type {
@@ -63,6 +64,7 @@ export function AtlasViewer() {
   const [nomenclature, setNomenclature] = useState<Nomenclature | null>(null)
   const [language, setLanguage] = useState<LanguageCode>(DEFAULT_LANGUAGE)
   const [showContrib, setShowContrib] = useState(false)
+  const [explode, setExplode] = useState(0)
   /** Hash awal dibaca SEKALI, sebelum apa pun sempat menimpanya. */
   const initialHash = useRef(typeof window === 'undefined' ? '' : window.location.hash)
 
@@ -149,6 +151,15 @@ export function AtlasViewer() {
     rendererRef.current?.setSystemOpacity(systemId, opacity)
     setActivePreset(null)
   }
+  /**
+   * Scrub slider tidak beranimasi (animate=false): animasi 800 ms akan melawan
+   * gerakan jari user dan terasa seperti lag.
+   */
+  const handleExplode = (v: number): void => {
+    setExplode(v)
+    rendererRef.current?.setExplode(v, false)
+  }
+
   const handleVisibilityPreset = (presetId: string): void => {
     rendererRef.current?.applyPreset(presetId)
     setActivePreset(presetId)
@@ -350,6 +361,15 @@ export function AtlasViewer() {
         >
           {copied ? 'Tersalin ✓' : 'Salin tautan'}
         </button>
+      )}
+
+      {ready && (
+        <ExplodeControl
+          value={explode}
+          visibleCount={systems.reduce((n, x) => n + (x.visible ? x.count : 0), 0)}
+          warnThreshold={EXPLODE_WARN_THRESHOLD}
+          onChange={handleExplode}
+        />
       )}
 
       {ready && <ViewToolbar onPreset={handlePreset} onReset={handleReset} />}

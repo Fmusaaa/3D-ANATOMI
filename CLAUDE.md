@@ -5,8 +5,7 @@ BodyParts3D (~2.200+ mesh, 15 sistem organ). Target user: **mahasiswa kedokteran
 Indonesia** — bukan viewer umum. Baca `PRD.md` untuk spesifikasi lengkap; file
 ini cuma aturan main yang wajib diingat tiap sesi.
 
-**Status saat ini: Fase 5 (nomenklatur) — infrastruktur selesai, kurasi
-belum.** Pipeline data, renderer, seleksi, visibilitas, pencarian, deep link,
+**Status saat ini: Fase 4 & 5 selesai (engineering).** Pipeline data, renderer, seleksi, visibilitas, pencarian, deep link,
 dan layer nomenklatur Latin/Indonesia sudah jalan. **0 entri terverifikasi** —
 §E7 AC6 menunggu review manusia.
 
@@ -65,6 +64,7 @@ Butuh venv sendiri: `pip install -r scripts/requirements.txt`.
 | `StateTexture.ts` | State per struktur (visible/select/opacity/system) |
 | `CameraController.ts` | OrbitControls, preset, fly-to sferis, batas zoom |
 | `PickingPass.ts` | GPU picking 1x1. `readRenderTargetPixels` = stall sinkron |
+| `ExplodeLayout.ts` | Layout explode. **Murni angka, tanpa three.js** — itu yang bikin non-overlap bisa dibuktikan di unit test |
 | `VisibilityController.ts` | Visibilitas/opacity per sistem + fade 180 ms |
 | `loaders/AtlasLoader.ts` | Parse `.atlas`, tolak file rusak dengan pesan jelas |
 | `shaders/atlasChunks.ts` | Potongan GLSL. `octDecode` WAJIB pakai `signNotZero` |

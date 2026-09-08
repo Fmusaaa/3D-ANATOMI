@@ -17,7 +17,8 @@ import * as THREE from 'three'
 import { BatchManager, systemIndex } from './BatchManager'
 import { CameraController } from './CameraController'
 import { PickingPass } from './PickingPass'
-import { SelectState, StateTexture, type SelectStateValue } from './StateTexture'
+import { SelectState, StateTexture, XformTexture, type SelectStateValue } from './StateTexture'
+import { computeExplodeLayout, type ExplodeItem } from './ExplodeLayout'
 import { VisibilityController, type SystemState } from './VisibilityController'
 import { VISIBILITY_PRESETS } from './presets'
 import { ViewerEmitter } from './events'
@@ -30,6 +31,10 @@ const HOVER_INTERVAL_MS = 50
 const MAX_SELECTION = 8
 /** Gerakan pointer di bawah ambang ini masih dianggap klik, bukan drag. */
 const CLICK_SLOP_PX = 4
+/** §E6 AC1: animasi explode 800 ms, ease-in-out. */
+const EXPLODE_MS = 800
+/** §E6 AC8: di atas ini, explode bikin layar jadi bubur. */
+export const EXPLODE_WARN_THRESHOLD = 1200
 
 /** Dev overlay di-push maksimal 10 Hz (§5.2 aturan 2). */
 const STATS_INTERVAL_MS = 100
@@ -54,6 +59,7 @@ export class AtlasRenderer {
   private camera: CameraController | null = null
   private batches: BatchManager | null = null
   private state: StateTexture | null = null
+  private xform: XformTexture | null = null
   private visibility: VisibilityController | null = null
   private picking: PickingPass | null = null
 
@@ -63,6 +69,14 @@ export class AtlasRenderer {
   private lastHoverAt = 0
   private cameraMoving = false
   private pointerDownPos: { x: number; y: number } | null = null
+
+  // --- explode (§E6): field class, bukan React state ---
+  private explodeTarget = 0
+  private explodeCurrent = 0
+  private explodeAnimStart = 0
+  private explodeAnimFrom = 0
+  private explodeOffsets = new Map<number, [number, number, number]>()
+  private explodeLayoutDirty = true
   private resizeObserver: ResizeObserver | null = null
 
   private readonly dataUrl: string
@@ -83,6 +97,16 @@ export class AtlasRenderer {
   private readonly structureBounds = new Map<number, THREE.Sphere>()
   /** structureIdx -> systemId, supaya auto-unhide tahu sistem mana. */
   private readonly systemOf = new Map<number, string>()
+  /** Metadata geometris untuk layout explode (§E6). */
+  private readonly structureMeta = new Map<
+    number,
+    {
+      bbox: readonly [readonly [number, number, number], readonly [number, number, number]]
+      centroid: readonly [number, number, number]
+      region: string
+      system: string
+    }
+  >()
 
   constructor(options: AtlasRendererOptions = {}) {
     this.dataUrl = options.dataUrl ?? '/data'
@@ -164,7 +188,9 @@ export class AtlasRenderer {
       this.structureCount = manifest.structureCount
 
       const state = new StateTexture(manifest.structureCount)
-      const batches = new BatchManager(state)
+      const xform = new XformTexture(manifest.structureCount)
+      this.xform = xform
+      const batches = new BatchManager(state, xform)
       const visibility = new VisibilityController(state)
       this.state = state
       this.batches = batches
@@ -190,6 +216,18 @@ export class AtlasRenderer {
               Math.max(lo.distanceTo(hi) / 2, 1e-4),
             ),
           )
+          this.structureMeta.set(st.idx, {
+            bbox: [
+              [st.bbox[0][0], st.bbox[0][1], st.bbox[0][2]],
+              [st.bbox[1][0], st.bbox[1][1], st.bbox[1][2]],
+            ],
+            centroid: [st.centroid[0], st.centroid[1], st.centroid[2]],
+            // Regio & sistem dipakai untuk urutan anatomis (§E6 AC5). Regio
+            // per-struktur belum ada di header .atlas, jadi systemId dipakai
+            // sebagai pengelompokan utama sampai itu ditambahkan.
+            region: batch.header.systemId,
+            system: batch.header.systemId,
+          })
         }
         this.expandBounds(batch.header.structures)
         batches.add(batch)
@@ -251,6 +289,7 @@ export class AtlasRenderer {
 
   /** Toggle satu sistem. Beranimasi 180 ms (§E4 AC7). */
   setSystemVisible(systemId: string, visible: boolean): void {
+    this.explodeLayoutDirty = true
     if (this.visibility?.setSystem(systemId, { visible })) {
       this.events.emit('systems', this.visibility.snapshot())
       this.requestRender()
@@ -274,6 +313,7 @@ export class AtlasRenderer {
     const vis = this.visibility
     if (!preset || !vis) return
 
+    this.explodeLayoutDirty = true
     const show = new Set(preset.show)
     const ghost = new Set(preset.ghost ?? [])
     let changed = false
@@ -531,6 +571,101 @@ export class AtlasRenderer {
     return revealed
   }
 
+  // ------------------------------------------------------------------ explode
+
+  /**
+   * §E6 AC1: atur progres explode 0..1.
+   *
+   * `animate: false` dipakai slider scrub — user menyeret, jadi tidak boleh
+   * ada animasi yang melawan gerakannya.
+   */
+  setExplode(progress: number, animate = true): void {
+    const next = Math.min(1, Math.max(0, progress))
+    if (next === this.explodeTarget && !animate) return
+    this.explodeTarget = next
+    if (animate) {
+      this.explodeAnimFrom = this.explodeCurrent
+      this.explodeAnimStart = performance.now()
+    } else {
+      this.explodeCurrent = next
+      this.explodeAnimStart = 0
+      this.applyExplodeOffsets()
+    }
+    this.requestRender()
+  }
+
+  get explodeProgress(): number {
+    return this.explodeCurrent
+  }
+
+  /**
+   * §E6 AC2: hanya struktur yang TERLIHAT yang ikut layout.
+   *
+   * Dipanggil ulang setiap visibilitas berubah — menyembunyikan sistem lalu
+   * explode harus menghitung ulang untuk yang tersisa, bukan menyisakan lubang.
+   */
+  private rebuildExplodeLayout(): void {
+    const state = this.state
+    if (!state) return
+
+    const items: ExplodeItem[] = []
+    for (const [idx, meta] of this.structureMeta) {
+      if (!state.getVisible(idx)) continue
+      items.push({ idx, bbox: meta.bbox, region: meta.region, system: meta.system })
+    }
+
+    const canvas = this.canvas
+    const aspect = canvas && canvas.clientHeight > 0 ? canvas.clientWidth / canvas.clientHeight : 1
+    const layout = computeExplodeLayout(items, { aspect })
+
+    this.explodeOffsets.clear()
+    for (const it of items) {
+      const target = layout.targets.get(it.idx)
+      const meta = this.structureMeta.get(it.idx)
+      if (!target || !meta) continue
+      // Offset = tujuan - posisi anatomis sekarang.
+      this.explodeOffsets.set(it.idx, [
+        target[0] - meta.centroid[0],
+        target[1] - meta.centroid[1],
+        target[2] - meta.centroid[2],
+      ])
+    }
+    // Batas zoom keluar harus mengikuti ukuran tampilan, bukan ukuran tubuh.
+    // Grid explode jauh lebih besar dari model anatomis.
+    let maxDist = 0
+    for (const t of layout.targets.values()) {
+      maxDist = Math.max(maxDist, Math.hypot(t[0], t[1], t[2]))
+    }
+    this.explodedRadius = maxDist + layout.cell
+    this.explodeLayoutDirty = false
+  }
+
+  /** Radius bola pembatas saat explode penuh; dipakai melonggarkan batas zoom. */
+  private explodedRadius = 0
+
+  private applyExplodeOffsets(): void {
+    const xform = this.xform
+    if (!xform) return
+    if (this.explodeLayoutDirty) this.rebuildExplodeLayout()
+
+    const k = this.explodeCurrent
+    // Interpolasi batas zoom bersama progres, supaya saat kembali ke 0 batasnya
+    // ikut mengetat lagi.
+    this.camera?.setContentRadius(this.explodedRadius * k)
+    if (k === 0) {
+      xform.reset()
+      return
+    }
+    for (const [idx, off] of this.explodeOffsets) {
+      xform.setOffset(idx, off[0] * k, off[1] * k, off[2] * k)
+    }
+  }
+
+  /** §E6 AC8: jumlah struktur terlihat, untuk memperingatkan sebelum explode. */
+  get visibleStructureCount(): number {
+    return this.state?.visible ?? 0
+  }
+
   // ------------------------------------------------------------ render loop
 
   /**
@@ -556,10 +691,12 @@ export class AtlasRenderer {
     const cameraMoving = camera.update(now)
     this.cameraMoving = cameraMoving
     const fading = this.visibility?.update(now) ?? false
+    const exploding = this.updateExplode(now)
+    if (this.xform?.flush()) this.needsRender = true
     if (this.state?.flush()) this.needsRender = true
     if (this.batches?.syncTransparentPass()) this.needsRender = true
 
-    if (cameraMoving || fading || this.needsRender) {
+    if (cameraMoving || fading || exploding || this.needsRender) {
       const t0 = performance.now()
       renderer.render(this.scene, camera.camera)
       this.lastFrameMs = performance.now() - t0
@@ -570,11 +707,29 @@ export class AtlasRenderer {
 
     // Jadwalkan lagi HANYA selama kamera masih bergerak. Begitu damping
     // selesai, loop mati total dan idle benar-benar 0 render.
-    if ((cameraMoving || fading) && this.rafId === null) {
+    if ((cameraMoving || fading || exploding) && this.rafId === null) {
       this.rafId = requestAnimationFrame(this.frame)
     }
 
     this.pushStats(now)
+  }
+
+  /** ease-in-out cubic (§E6 AC1). */
+  private updateExplode(now: number): boolean {
+    if (this.explodeAnimStart === 0) {
+      if (this.explodeLayoutDirty && this.explodeCurrent > 0) this.applyExplodeOffsets()
+      return false
+    }
+    const t = Math.min(1, (now - this.explodeAnimStart) / EXPLODE_MS)
+    const k = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    this.explodeCurrent = this.explodeAnimFrom + (this.explodeTarget - this.explodeAnimFrom) * k
+    this.applyExplodeOffsets()
+    if (t >= 1) {
+      this.explodeCurrent = this.explodeTarget
+      this.explodeAnimStart = 0
+      return false
+    }
+    return true
   }
 
   private pushStats(now: number): void {
@@ -634,6 +789,7 @@ export class AtlasRenderer {
     this.camera?.dispose()
     this.batches?.dispose()
     this.state?.dispose()
+    this.xform?.dispose()
     this.scene.clear()
     this.renderer?.dispose()
     this.renderer = null

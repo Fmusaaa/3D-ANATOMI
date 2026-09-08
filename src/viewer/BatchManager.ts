@@ -17,7 +17,7 @@ import {
   VERTEX_DECLARATIONS,
   VERTEX_NORMAL_BODY,
 } from './shaders/atlasChunks'
-import type { StateTexture } from './StateTexture'
+import type { StateTexture, XformTexture } from './StateTexture'
 import type { AtlasBatch } from './loaders/AtlasLoader'
 
 /** Urutan menentukan index palet; state texture menyimpan index ini di channel A. */
@@ -112,10 +112,12 @@ export class BatchManager {
 
   private readonly entries: BatchEntry[] = []
   private readonly stateTex: StateTexture
+  private readonly xformTex: XformTexture
   private transparentPassEnabled = false
 
-  constructor(stateTex: StateTexture) {
+  constructor(stateTex: StateTexture, xformTex: XformTexture) {
     this.stateTex = stateTex
+    this.xformTex = xformTex
     this.group.name = 'atlas'
   }
 
@@ -180,6 +182,7 @@ export class BatchManager {
 
     mat.onBeforeCompile = (shader) => {
       shader.uniforms['uStateTex'] = { value: this.stateTex.texture }
+      shader.uniforms['uXformTex'] = { value: this.xformTex.texture }
       shader.uniforms['uStateTexHeight'] = { value: this.stateTex.height }
       shader.uniforms['uPaletteTex'] = { value: this.palette }
       shader.uniforms['uPaletteSize'] = { value: SYSTEM_ORDER.length }
@@ -222,6 +225,7 @@ export class BatchManager {
         uQuantScale: { value: new THREE.Vector3(...batch.header.quantScale) },
         uQuantOffset: { value: new THREE.Vector3(...batch.header.quantOffset) },
         uStateTex: { value: this.stateTex.texture },
+        uXformTex: { value: this.xformTex.texture },
         uStateTexHeight: { value: this.stateTex.height },
         uMinPickOpacity: { value: MIN_PICK_OPACITY },
       },

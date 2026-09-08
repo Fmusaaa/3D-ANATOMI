@@ -210,6 +210,23 @@ export class CameraController {
     return changed
   }
 
+  /**
+   * Longgarkan batas zoom keluar untuk tampilan yang lebih besar dari model
+   * anatomis — mis. exploded view (§E6).
+   *
+   * Tanpa ini, `maxDistance` tetap dihitung dari bbox tubuh dan user tidak
+   * akan pernah bisa mundur cukup jauh untuk melihat hasil explode. Layarnya
+   * tampak kosong, dan itu terbaca sebagai fitur yang rusak.
+   *
+   * @param radius radius bola pembatas tampilan saat ini (meter)
+   */
+  setContentRadius(radius: number): void {
+    const fitDist = Math.max(radius, this.bounds.radius) / Math.sin((this.camera.fov * Math.PI) / 360)
+    this.controls.maxDistance = fitDist * 1.2
+    this.camera.far = Math.max(this.camera.far, fitDist * 8)
+    this.camera.updateProjectionMatrix()
+  }
+
   /** Snapshot untuk deep link (§E14 AC1). */
   getState(): { position: [number, number, number]; target: [number, number, number] } {
     const p = this.camera.position
