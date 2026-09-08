@@ -28,6 +28,34 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+
+  /*
+   * Token panel mengambang (§8.1 prinsip 2: gelap default, sediakan terang).
+   *
+   * Komponen TIDAK boleh memakai bg-black/text-white langsung — itu hanya
+   * benar di satu tema, dan versi pertama aplikasi ini memang begitu sehingga
+   * mode terang mustahil ditambahkan tanpa menyentuh setiap file.
+   *
+   * ⚠️ Nilai alpha di bawah BUKAN pilihan estetis bebas: §E11 AC7 menuntut
+   * kontras WCAG AA 4,5:1. Alpha `subtle` sempat 0,42 di mode terang dan
+   * menghasilkan rasio 2,77 — 53 elemen gagal AA sekaligus. Kalau menurunkan
+   * nilai-nilai ini, ukur ulang kontrasnya.
+   */
+  --canvas-bg: #eef0f3;
+  --panel-bg: rgb(255 255 255 / 0.88);
+  --panel-border: rgb(15 18 24 / 0.12);
+  --panel-fg: rgb(15 18 24 / 0.94);
+  --panel-fg-muted: rgb(15 18 24 / 0.74);
+  --panel-fg-subtle: rgb(15 18 24 / 0.62);
+  --panel-soft: rgb(15 18 24 / 0.06);
+  --panel-soft-hover: rgb(15 18 24 / 0.12);
+  --panel-inverse: rgb(15 18 24 / 0.92);
+  --panel-inverse-fg: rgb(255 255 255 / 0.96);
+  --panel-link: #075985;
+  --panel-warn: #7c2d12;
+  --panel-warn-bg: rgb(245 158 11 / 0.14);
+  --panel-warn-border: rgb(180 83 9 / 0.35);
+  --panel-ok: #065f46;
 }
 
 .dark {
@@ -50,6 +78,22 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+
+  --canvas-bg: #0d0f12;
+  --panel-bg: rgb(0 0 0 / 0.74);
+  --panel-border: rgb(255 255 255 / 0.11);
+  --panel-fg: rgb(255 255 255 / 0.94);
+  --panel-fg-muted: rgb(255 255 255 / 0.72);
+  --panel-fg-subtle: rgb(255 255 255 / 0.54);
+  --panel-soft: rgb(255 255 255 / 0.07);
+  --panel-soft-hover: rgb(255 255 255 / 0.14);
+  --panel-inverse: rgb(255 255 255 / 0.92);
+  --panel-inverse-fg: rgb(0 0 0 / 0.92);
+  --panel-link: #7dd3fc;
+  --panel-warn: #fcd34d;
+  --panel-warn-bg: rgb(251 191 36 / 0.12);
+  --panel-warn-border: rgb(251 191 36 / 0.28);
+  --panel-ok: #34d399;
 }
 
 @theme inline {
@@ -75,6 +119,22 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-canvas: var(--canvas-bg);
+  --color-panel: var(--panel-bg);
+  --color-panel-border: var(--panel-border);
+  --color-panel-fg: var(--panel-fg);
+  --color-panel-muted: var(--panel-fg-muted);
+  --color-panel-subtle: var(--panel-fg-subtle);
+  --color-panel-soft: var(--panel-soft);
+  --color-panel-soft-hover: var(--panel-soft-hover);
+  --color-panel-inverse: var(--panel-inverse);
+  --color-panel-inverse-fg: var(--panel-inverse-fg);
+  --color-panel-link: var(--panel-link);
+  --color-panel-warn: var(--panel-warn);
+  --color-panel-warn-bg: var(--panel-warn-bg);
+  --color-panel-warn-border: var(--panel-warn-border);
+  --color-panel-ok: var(--panel-ok);
 }
 
 @layer base {

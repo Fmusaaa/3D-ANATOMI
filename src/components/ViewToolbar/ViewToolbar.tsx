@@ -31,7 +31,7 @@ export function ViewToolbar({ onPreset, onReset, disabled }: Props) {
       aria-label="Sudut pandang"
       // Di layar sempit 7 tombol tidak muat; biarkan menggulung horizontal
       // alih-alih meluber keluar viewport (§E11 AC1).
-      className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-xl border border-white/10 bg-black/70 p-1.5 backdrop-blur"
+      className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-xl border border-panel-border bg-panel p-1.5 backdrop-blur"
     >
       {VIEW_PRESETS.map((p) => (
         <Button
@@ -46,12 +46,12 @@ export function ViewToolbar({ onPreset, onReset, disabled }: Props) {
           title={VIEW_PRESET_LABELS[p]}
           aria-label={VIEW_PRESET_LABELS[p]}
           // §E11 AC3: target sentuh ≥ 44×44 px.
-          className="h-11 min-w-11 shrink-0 px-3 text-white/75 hover:bg-white/10 hover:text-white"
+          className="h-11 min-w-11 shrink-0 px-3 text-panel-muted hover:bg-panel-soft-hover hover:text-panel-fg"
         >
           {SHORT[p]}
         </Button>
       ))}
-      <div className="mx-1 h-6 w-px bg-white/10" aria-hidden="true" />
+      <div className="mx-1 h-6 w-px bg-panel-soft-hover" aria-hidden="true" />
       <Button
         type="button"
         size="sm"
@@ -60,7 +60,7 @@ export function ViewToolbar({ onPreset, onReset, disabled }: Props) {
         onClick={onReset}
         title="Reset view"
         aria-label="Reset view"
-        className="h-11 min-w-11 px-3 text-white/75 hover:bg-white/10 hover:text-white"
+        className="h-11 min-w-11 px-3 text-panel-muted hover:bg-panel-soft-hover hover:text-panel-fg"
       >
         Reset
       </Button>

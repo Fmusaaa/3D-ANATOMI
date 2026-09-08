@@ -29,20 +29,20 @@ export function HoverTooltip({ structure, nomenclature, language, x, y }: Props)
   return (
     <div
       role="status"
-      className="pointer-events-none fixed z-30 max-w-[248px] rounded-md border border-white/12 bg-black/85 px-2.5 py-1.5 backdrop-blur"
+      className="pointer-events-none fixed z-30 max-w-[248px] rounded-md border border-panel-border bg-panel px-2.5 py-1.5 backdrop-blur"
       style={{ left, top }}
     >
       <p className="flex items-baseline gap-1.5">
-        <span className="truncate text-[12px] leading-tight text-white/95">
+        <span className="truncate text-[12px] leading-tight text-panel-fg">
           {primary.text || structure.name.en}
         </span>
         {primary.entry && <StatusBadge status={primary.entry.status} />}
       </p>
       {/* Baris kedua: nama Inggris kalau bahasa utamanya bukan Inggris. */}
       {language !== 'en' && primary.text && (
-        <p className="truncate text-[10px] text-white/40">{structure.name.en}</p>
+        <p className="truncate text-[10px] text-panel-subtle">{structure.name.en}</p>
       )}
-      {sys && <p className="truncate text-[10px] text-white/45">{sys.id}</p>}
+      {sys && <p className="truncate text-[10px] text-panel-subtle">{sys.id}</p>}
     </div>
   )
 }

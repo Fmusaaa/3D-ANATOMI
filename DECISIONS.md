@@ -736,3 +736,58 @@ Cara menguji dengan benar:
 
 lalu ukur. Atau matikan transisinya dulu. Jangan simpulkan ada bug layout
 sebelum memastikan tidak ada transisi yang menggantung.
+
+## D-035 — Warna UI dipindah ke token tema; mode terang jadi mungkin
+
+**Tanggal:** 7 September 2026 · **Fase:** F9 · **Status:** diterapkan
+
+§8.1 sejak awal menyebut *"Sediakan mode terang"*, tapi seluruh panel ditulis
+dengan warna hardcoded (`bg-black/70`, `text-white/90`). Itu hanya benar di satu
+tema, dan membuat mode terang mustahil ditambahkan tanpa menyentuh setiap file.
+
+13 file dimigrasi ke token semantik (`bg-panel`, `text-panel-fg`,
+`text-panel-muted`, `text-panel-subtle`, `--panel-warn`, `--panel-ok`,
+`--panel-link`). Warna yang punya MAKNA — palet 13 sistem organ — sengaja
+tidak diubah: itu konvensi atlas anatomi, bukan warna UI.
+
+Latar kanvas 3D ikut tema lewat `AtlasRenderer.setBackground()`; warnanya wajib
+cocok dengan `--canvas-bg` di CSS, kalau tidak akan ada garis beda warna di
+tepi kanvas.
+
+Tiga pilihan tema (terang / gelap / ikut sistem), default gelap sesuai §8.1.
+
+## D-036 — Alpha token BUKAN pilihan estetis: 53 elemen gagal WCAG AA
+
+**Tanggal:** 7 September 2026 · **Fase:** F9 · **Status:** diperbaiki
+
+Nilai alpha token yang pertama dipilih karena "kelihatan enak" di mode gelap.
+Diukur di mode terang: `--panel-fg-subtle` beralpha 0,42 menghasilkan rasio
+kontras **2,77** — dan **53 elemen sekaligus gagal §E11 AC7 (WCAG AA 4,5:1)**.
+
+Itu persis keluhan yang dilaporkan product owner: "ada beberapa yang nggak
+kelihatan".
+
+Setelah alpha dinaikkan (muted 0,74 / subtle 0,62 di terang; 0,72 / 0,54 di
+gelap) dan warna semantik digelapkan untuk mode terang: **0 gagal di kedua
+tema**, diukur pada seluruh teks yang tampil.
+
+⚠️ Kalau menurunkan nilai alpha ini lagi, ukur ulang kontrasnya. Sudah dicatat
+sebagai komentar di `index.css`.
+
+## D-037 — Halaman About + atribusi footer (§12, P0)
+
+**Tanggal:** 7 September 2026 · **Fase:** F9 · **Status:** diterapkan
+
+§12 mewajibkan atribusi tampil di footer setiap halaman DAN di halaman About,
+plus sitasi paper aslinya. Ini P0 dan gerbang sebelum deploy publik pertama.
+
+Halaman About memuat: disclaimer, atribusi DBCLS lengkap, sitasi Mitsuhashi
+et al. 2009, lisensi kode MIT — **dan konflik lisensi yang belum selesai,
+apa adanya**. Menyembunyikannya sampai "nanti sudah jelas" berarti
+mendistribusikan data dengan klaim lisensi yang belum tentu benar.
+
+Juga memuat batas yang jujur: nomenklatur masih otomatis, saraf perifer tidak
+ada di dataset, sebagian regio hasil tebakan spasial.
+
+Atribusi footer disembunyikan di layar sempit (menutupi kanvas); di sana
+atribusinya ada di halaman Tentang.

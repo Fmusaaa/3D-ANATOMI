@@ -30,6 +30,9 @@ import { LanguageToggle } from '@/components/Nomenclature/LanguageToggle'
 import { BottomSheet, type SheetStop } from '@/components/Mobile/BottomSheet'
 import { Drawer } from '@/components/Mobile/Drawer'
 import { detectCapability, useIsMobile, type DeviceCapability } from '@/lib/device'
+import { AboutPanel, ATTRIBUTION_SHORT } from '@/components/About/AboutPanel'
+import { ThemeToggle } from '@/components/ThemeToggle/ThemeToggle'
+import { CANVAS_BG, useTheme } from '@/lib/theme'
 import { ExplodeControl } from '@/components/ExplodeControl/ExplodeControl'
 import { DevOverlay } from '@/components/DevOverlay/DevOverlay'
 import { SearchBar } from '@/components/SearchBar/SearchBar'
@@ -67,7 +70,10 @@ export function AtlasViewer() {
   const [nomenclature, setNomenclature] = useState<Nomenclature | null>(null)
   const [language, setLanguage] = useState<LanguageCode>(DEFAULT_LANGUAGE)
   const [showContrib, setShowContrib] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
+  const [modelStats, setModelStats] = useState<{ structures: number; triangles: number } | null>(null)
   const [explode, setExplode] = useState(0)
+  const { choice: themeChoice, resolved: theme, setChoice: setTheme } = useTheme()
   const isMobile = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [sheetStop, setSheetStop] = useState<SheetStop>('half')
@@ -86,9 +92,10 @@ export function AtlasViewer() {
     const off = [
       renderer.events.on('stats', setStats),
       renderer.events.on('progress', setProgress),
-      renderer.events.on('ready', () => {
+      renderer.events.on('ready', (info) => {
         setReady(true)
         setProgress(null)
+        setModelStats(info)
         // §E14 AC3: pulihkan state SETELAH geometri siap — sebelum itu
         // structureCount masih 0 dan seleksi akan ditolak diam-diam.
         const restored = decodeState(initialHash.current, SYSTEM_ORDER)
@@ -150,6 +157,11 @@ export function AtlasViewer() {
       rendererRef.current = null
     }
   }, [])
+
+  // Latar kanvas 3D ikut tema; tanpa ini kanvas tetap gelap di mode terang.
+  useEffect(() => {
+    rendererRef.current?.setBackground(CANVAS_BG[theme])
+  }, [theme, ready])
 
   const handlePreset = (p: ViewPreset): void => {
     rendererRef.current?.setPreset(p)
@@ -273,7 +285,7 @@ export function AtlasViewer() {
     : []
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#0d0f12]">
+    <div className="relative h-full w-full overflow-hidden bg-canvas">
       {/*
         §E11 AC10: canvas 3D punya deskripsi teks alternatif. Jalur non-visual
         (tree struktur yang bisa dinavigasi keyboard) menyusul di Fase 2.
@@ -307,7 +319,7 @@ export function AtlasViewer() {
       {toast && (
         <div
           role="status"
-          className="pointer-events-none absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-lg border border-white/15 bg-black/85 px-3.5 py-2 text-[12px] text-white/85 backdrop-blur"
+          className="pointer-events-none absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-lg border border-panel-border bg-panel px-3.5 py-2 text-[12px] text-panel-fg backdrop-blur"
         >
           {toast}
         </div>
@@ -334,7 +346,7 @@ export function AtlasViewer() {
             }}
             aria-label="Buka panel sistem"
             aria-expanded={drawerOpen}
-            className="pointer-events-auto absolute top-3 left-3 z-20 rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-[13px] text-white/80 backdrop-blur"
+            className="pointer-events-auto absolute top-3 left-3 z-20 rounded-lg border border-panel-border bg-panel px-3 py-2 text-[13px] text-panel-fg backdrop-blur"
           >
             Sistem
           </button>
@@ -412,6 +424,7 @@ export function AtlasViewer() {
 
       {ready && (
         <div className="pointer-events-none absolute top-3 right-3 z-20 flex items-center gap-2">
+          <ThemeToggle value={themeChoice} onChange={setTheme} />
           <LanguageToggle value={language} onChange={setLanguage} coverage={coverage} />
           <button
             type="button"
@@ -419,9 +432,18 @@ export function AtlasViewer() {
               setShowContrib(true)
             }}
             title="Daftar istilah yang perlu direview (§E7 AC5)"
-            className="pointer-events-auto rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-[12px] text-white/60 backdrop-blur hover:text-white/95"
+            className="pointer-events-auto rounded-lg border border-panel-border bg-panel px-3 py-2 text-[12px] text-panel-muted backdrop-blur hover:text-panel-fg"
           >
             Kontribusi
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAbout(true)
+            }}
+            className="pointer-events-auto rounded-lg border border-panel-border bg-panel px-3 py-2 text-[12px] text-panel-muted backdrop-blur hover:text-panel-fg"
+          >
+            Tentang
           </button>
         </div>
       )}
@@ -431,7 +453,7 @@ export function AtlasViewer() {
           type="button"
           onClick={handleCopyLink}
           title="Salin tautan tampilan ini"
-          className="pointer-events-auto absolute top-16 right-3 z-20 rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-[12px] text-white/60 backdrop-blur hover:text-white/95"
+          className="pointer-events-auto absolute top-16 right-3 z-20 rounded-lg border border-panel-border bg-panel px-3 py-2 text-[12px] text-panel-muted backdrop-blur hover:text-panel-fg"
         >
           {copied ? 'Tersalin ✓' : 'Salin tautan'}
         </button>
@@ -448,6 +470,26 @@ export function AtlasViewer() {
 
       {ready && <ViewToolbar onPreset={handlePreset} onReset={handleReset} />}
 
+      {showAbout && (
+        <AboutPanel
+          stats={modelStats}
+          onClose={() => {
+            setShowAbout(false)
+          }}
+        />
+      )}
+
+      {/*
+        §12: atribusi WAJIB tampil di footer SETIAP halaman, bukan cuma di
+        halaman About. Disembunyikan di mobile karena menutupi kanvas; di sana
+        atribusinya ada di halaman Tentang.
+      */}
+      {ready && !isMobile && (
+        <p className="pointer-events-none absolute bottom-1.5 left-1/2 z-10 hidden -translate-x-1/2 text-[10px] text-panel-subtle sm:block">
+          {ATTRIBUTION_SHORT} · Materi edukasi, bukan acuan praktik klinis
+        </p>
+      )}
+
       {showContrib && (
         <ContributionPanel
           nomenclature={nomenclature}
@@ -461,7 +503,7 @@ export function AtlasViewer() {
       {ready && capability?.limited && !capabilityDismissed && (
         <div
           role="status"
-          className="pointer-events-auto absolute inset-x-3 bottom-3 z-30 rounded-lg border border-amber-400/25 bg-amber-950/80 p-3 text-[12px] leading-relaxed text-amber-100/90 backdrop-blur sm:inset-x-auto sm:right-3 sm:max-w-sm"
+          className="pointer-events-auto absolute inset-x-3 bottom-3 z-30 rounded-lg border border-panel-warn-border bg-panel-warn-bg p-3 text-[12px] leading-relaxed text-panel-warn backdrop-blur sm:inset-x-auto sm:right-3 sm:max-w-sm"
         >
           <p className="font-medium">Perangkat ini terbatas</p>
           <p className="mt-1 opacity-85">
@@ -474,7 +516,7 @@ export function AtlasViewer() {
             onClick={() => {
               setCapabilityDismissed(true)
             }}
-            className="mt-2 rounded border border-amber-400/30 px-2 py-1 text-[11px] hover:bg-amber-400/10"
+            className="mt-2 rounded border border-panel-warn-border px-2 py-1 text-[11px] hover:bg-panel-soft-hover"
           >
             Mengerti
           </button>
@@ -483,7 +525,7 @@ export function AtlasViewer() {
 
       {progress && !ready && (
         <div className="pointer-events-none absolute inset-x-0 bottom-10 z-20 flex justify-center">
-          <div className="rounded-lg border border-white/10 bg-black/70 px-4 py-2 font-mono text-xs text-white/70 backdrop-blur">
+          <div className="rounded-lg border border-panel-border bg-panel px-4 py-2 font-mono text-xs text-panel-muted backdrop-blur">
             Memuat {progress.loaded}/{progress.total} batch
             {progress.lastSystem ? ` — ${progress.lastSystem}` : ''}
           </div>
@@ -492,7 +534,7 @@ export function AtlasViewer() {
 
       {error && (
         <div className="absolute inset-0 z-30 flex items-center justify-center p-8">
-          <div className="max-w-md rounded-lg border border-red-500/30 bg-red-950/60 p-4 text-sm text-red-100 backdrop-blur">
+          <div className="max-w-md rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-100 backdrop-blur">
             <p className="mb-1 font-semibold">Gagal memuat atlas</p>
             <p className="font-mono text-xs break-words opacity-90">{error}</p>
             <p className="mt-2 text-xs opacity-70">

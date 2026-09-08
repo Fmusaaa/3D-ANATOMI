@@ -61,7 +61,7 @@ export function Drawer({ open, onClose, label, children }: Props) {
   return (
     <>
       <div
-        className="pointer-events-auto absolute inset-0 z-30 bg-black/50"
+        className="pointer-events-auto absolute inset-0 z-30 bg-panel-inverse/40"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -70,15 +70,15 @@ export function Drawer({ open, onClose, label, children }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="pointer-events-auto absolute inset-y-0 left-0 z-40 flex w-[min(320px,86vw)] flex-col border-r border-white/12 bg-black/95 backdrop-blur"
+        className="pointer-events-auto absolute inset-y-0 left-0 z-40 flex w-[min(320px,86vw)] flex-col border-r border-panel-border bg-panel backdrop-blur"
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-3 py-2">
-          <h2 className="text-[13px] font-medium text-white/85">{label}</h2>
+        <div className="flex shrink-0 items-center justify-between border-b border-panel-border px-3 py-2">
+          <h2 className="text-[13px] font-medium text-panel-fg">{label}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={`Tutup ${label}`}
-            className="rounded px-2 py-1 text-white/50 hover:bg-white/10 hover:text-white"
+            className="rounded px-2 py-1 text-panel-muted hover:bg-panel-soft-hover hover:text-panel-fg"
           >
             ×
           </button>

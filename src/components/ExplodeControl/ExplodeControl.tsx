@@ -31,7 +31,7 @@ export function ExplodeControl({
   const active = value > 0
 
   return (
-    <div className="pointer-events-auto absolute bottom-20 left-1/2 z-20 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border border-white/10 bg-black/70 px-3 py-2.5 backdrop-blur">
+    <div className="pointer-events-auto absolute bottom-20 left-1/2 z-20 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border border-panel-border bg-panel px-3 py-2.5 backdrop-blur">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -41,8 +41,8 @@ export function ExplodeControl({
           className={cn(
             'shrink-0 rounded-md px-2.5 py-1.5 text-[12px] transition-colors',
             active
-              ? 'bg-white/90 font-medium text-black'
-              : 'bg-white/8 text-white/70 hover:bg-white/15 hover:text-white',
+              ? 'bg-panel-inverse font-medium text-panel-inverse-fg'
+              : 'bg-panel-soft text-panel-muted hover:bg-panel-soft-hover hover:text-panel-fg',
           )}
         >
           Explode
@@ -60,10 +60,10 @@ export function ExplodeControl({
           onValueCommit={(v) => {
             onCommit?.((v[0] ?? 0) / 100)
           }}
-          className="flex-1 [&_[data-slot=slider-range]]:bg-white/80 [&_[data-slot=slider-thumb]]:size-3.5 [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-track]]:bg-white/12"
+          className="flex-1 [&_[data-slot=slider-range]]:bg-panel-fg/70 [&_[data-slot=slider-thumb]]:size-3.5 [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-track]]:bg-panel-soft-hover"
         />
 
-        <span className="w-9 shrink-0 text-right text-[11px] text-white/50 tabular-nums">
+        <span className="w-9 shrink-0 text-right text-[11px] text-panel-muted tabular-nums">
           {pct}%
         </span>
       </div>
@@ -74,7 +74,7 @@ export function ExplodeControl({
         wizard.
       */}
       {tooMany && (
-        <p className="mt-2 text-[11px] leading-relaxed text-amber-300/80">
+        <p className="mt-2 text-[11px] leading-relaxed text-panel-warn">
           {visibleCount.toLocaleString('id')} struktur terlihat. Di atas{' '}
           {warnThreshold.toLocaleString('id')}, hasil explode jadi terlalu padat
           untuk dibaca — sembunyikan sistem lain dulu lewat panel kiri.

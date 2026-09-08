@@ -29,14 +29,14 @@ function Row({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-4" title={hint}>
-      <span className="text-white/45">{label}</span>
+      <span className="text-panel-subtle">{label}</span>
       <span
         className={cn(
           'tabular-nums',
-          tone === 'ok' && 'text-emerald-400',
-          tone === 'warn' && 'text-amber-400',
-          tone === 'bad' && 'text-red-400',
-          !tone && 'text-white/85',
+          tone === 'ok' && 'text-panel-ok',
+          tone === 'warn' && 'text-panel-warn',
+          tone === 'bad' && 'text-red-600 dark:text-red-400',
+          !tone && 'text-panel-fg',
         )}
       >
         {value}
@@ -51,14 +51,14 @@ export function DevOverlay({ stats, onClose }: Props) {
   const idle = stats.rendersLastSecond === 0
 
   return (
-    <div className="pointer-events-auto absolute bottom-3 left-3 z-20 w-60 rounded-lg border border-white/10 bg-black/70 p-3 font-mono text-[11px] leading-5 backdrop-blur">
+    <div className="pointer-events-auto absolute bottom-3 left-3 z-20 w-60 rounded-lg border border-panel-border bg-panel p-3 font-mono text-[11px] leading-5 backdrop-blur">
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="font-semibold tracking-wide text-white/70">DEV</span>
+        <span className="font-semibold tracking-wide text-panel-muted">DEV</span>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="rounded px-1 text-white/40 hover:text-white/80"
+            className="rounded px-1 text-panel-subtle hover:text-panel-fg"
             aria-label="Tutup dev overlay"
           >
             ×
@@ -82,7 +82,7 @@ export function DevOverlay({ stats, onClose }: Props) {
       />
       <Row label="frame" value={stats.frameMs === null ? '—' : `${stats.frameMs} ms`} />
 
-      <hr className="my-1.5 border-white/10" />
+      <hr className="my-1.5 border-panel-border" />
 
       <Row label="draw call" value={String(stats.drawCalls)} />
       <Row
@@ -98,7 +98,7 @@ export function DevOverlay({ stats, onClose }: Props) {
         value={`${stats.visibleStructures.toLocaleString('id')} / ${stats.totalStructures.toLocaleString('id')}`}
       />
 
-      <hr className="my-1.5 border-white/10" />
+      <hr className="my-1.5 border-panel-border" />
 
       <Row label="geometri" value={`${stats.geometryMB} MB`} />
       <Row

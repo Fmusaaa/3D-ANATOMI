@@ -27,7 +27,7 @@ export function LanguageToggle({ value, onChange, coverage }: Props) {
     <div
       role="radiogroup"
       aria-label="Bahasa yang ditampilkan lebih dulu"
-      className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-white/10 bg-black/70 p-1 backdrop-blur"
+      className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-panel-border bg-panel p-1 backdrop-blur"
     >
       {ORDER.map((lang) => {
         const cov = coverage?.[lang]
@@ -50,8 +50,8 @@ export function LanguageToggle({ value, onChange, coverage }: Props) {
             className={cn(
               'rounded px-2 py-1 text-[11px] font-medium transition-colors',
               value === lang
-                ? 'bg-white/90 text-black'
-                : 'text-white/55 hover:bg-white/10 hover:text-white/90',
+                ? 'bg-panel-inverse text-panel-inverse-fg'
+                : 'text-panel-muted hover:bg-panel-soft-hover hover:text-panel-fg',
             )}
           >
             {SHORT[lang]}

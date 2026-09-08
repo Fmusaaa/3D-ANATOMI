@@ -93,6 +93,13 @@ viewer di luar `types.ts`/`events.ts`.
   Fade visibilitas menggantung dan tinggi elemen membeku di nilai sebelum
   transisi — AC terlihat gagal padahal tidak. Sebelum menyimpulkan ada bug,
   jalankan `el.getAnimations().forEach(a => a.finish())`. Lihat D-018 & D-034.
+- **Jangan pakai warna hardcoded (`bg-black`, `text-white`) di komponen.**
+  Pakai token tema (`bg-panel`, `text-panel-fg`, `text-panel-muted`, ...) —
+  warna hardcoded hanya benar di satu tema (D-035). Palet 13 sistem organ
+  dikecualikan: itu konvensi anatomi, bukan warna UI.
+- **Alpha token tema bukan pilihan estetis bebas.** §E11 AC7 menuntut WCAG AA
+  4,5:1; nilai yang terlalu pudar pernah membuat 53 elemen gagal sekaligus
+  (D-036). Ukur ulang kalau menurunkannya.
 - **CSS tambahan WAJIB di dalam `@layer`.** CSS tanpa layer mengalahkan utility
   Tailwind apa pun specificity-nya; `button { position: relative }` tanpa layer
   pernah menimpa `.absolute` dan menjatuhkan semua tombol mengambang (D-031).

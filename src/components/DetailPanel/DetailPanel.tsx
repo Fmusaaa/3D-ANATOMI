@@ -44,14 +44,14 @@ interface Props {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-1.5">
-      <span className="shrink-0 text-[11px] text-white/40">{label}</span>
-      <span className="text-right text-[12px] text-white/80">{children}</span>
+      <span className="shrink-0 text-[11px] text-panel-subtle">{label}</span>
+      <span className="text-right text-[12px] text-panel-fg">{children}</span>
     </div>
   )
 }
 
 function Missing({ children }: { children: React.ReactNode }) {
-  return <span className="text-[11px] text-white/30 italic">{children}</span>
+  return <span className="text-[11px] text-panel-subtle italic">{children}</span>
 }
 
 export function DetailPanel({
@@ -78,7 +78,7 @@ export function DetailPanel({
         'flex flex-col overflow-hidden',
         variant === 'embedded'
           ? 'h-full w-full'
-          : 'pointer-events-auto absolute top-3 right-3 bottom-3 z-10 w-[336px] rounded-xl border border-white/10 bg-black/75 backdrop-blur',
+          : 'pointer-events-auto absolute top-3 right-3 bottom-3 z-10 w-[336px] rounded-xl border border-panel-border bg-panel backdrop-blur',
       )}
     >
       <div className="flex items-start justify-between gap-2 px-4 pt-4">
@@ -105,7 +105,7 @@ export function DetailPanel({
           type="button"
           onClick={onClose}
           aria-label="Tutup panel detail"
-          className="shrink-0 rounded px-1.5 py-0.5 text-white/40 hover:bg-white/10 hover:text-white/90"
+          className="shrink-0 rounded px-1.5 py-0.5 text-panel-subtle hover:bg-panel-soft-hover hover:text-panel-fg"
         >
           ×
         </button>
@@ -113,7 +113,7 @@ export function DetailPanel({
 
       {selected.length > 1 && (
         <div className="mt-3 px-4">
-          <p className="mb-1 text-[10px] tracking-widest text-white/35 uppercase">
+          <p className="mb-1 text-[10px] tracking-widest text-panel-subtle uppercase">
             Terpilih ({selected.length}/8)
           </p>
           <div className="flex flex-wrap gap-1">
@@ -127,8 +127,8 @@ export function DetailPanel({
                 className={cn(
                   'max-w-full truncate rounded px-1.5 py-0.5 text-[11px]',
                   x.idx === s.idx
-                    ? 'bg-amber-400/20 text-amber-200'
-                    : 'bg-white/8 text-white/60 hover:bg-white/15',
+                    ? 'bg-panel-warn-bg text-panel-warn'
+                    : 'bg-panel-soft text-panel-muted hover:bg-panel-soft-hover',
                 )}
               >
                 {x.name.en}
@@ -138,7 +138,7 @@ export function DetailPanel({
         </div>
       )}
 
-      <div className="mt-3 flex gap-1 border-b border-white/10 px-3">
+      <div className="mt-3 flex gap-1 border-b border-panel-border px-3">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -151,8 +151,8 @@ export function DetailPanel({
             className={cn(
               '-mb-px border-b-2 px-2.5 py-2 text-[12px]',
               tab === t.id
-                ? 'border-white text-white'
-                : 'border-transparent text-white/45 hover:text-white/75',
+                ? 'border-panel-fg text-panel-fg'
+                : 'border-transparent text-panel-subtle hover:text-panel-muted',
             )}
           >
             {t.label}
@@ -162,16 +162,16 @@ export function DetailPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {tab === 'ikhtisar' && (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-panel-border">
             <Field label="Sistem">
               {sys.la}
-              <span className="block text-[11px] text-white/40">{sys.id}</span>
+              <span className="block text-[11px] text-panel-subtle">{sys.id}</span>
             </Field>
             <Field label="Regio">
               {REGION_LABEL[s.region] ?? s.region}
               {s.regionVia === 'geometris' && (
                 <span
-                  className="mt-0.5 block text-[10px] text-amber-300/70"
+                  className="mt-0.5 block text-[10px] text-panel-warn"
                   title="Regio ini ditebak dari posisi spasial, bukan dari ontologi BodyParts3D"
                 >
                   perkiraan spasial
@@ -190,16 +190,16 @@ export function DetailPanel({
                 href={fmaUrl(s.fma)}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="text-sky-300/90 underline underline-offset-2 hover:text-sky-200"
+                className="text-panel-link underline underline-offset-2 hover:opacity-80"
               >
                 {s.fma}
               </a>
             </Field>
             <Field label="Mesh BP3D">
-              <span className="font-mono text-[11px] text-white/50">{s.fileId}</span>
+              <span className="font-mono text-[11px] text-panel-muted">{s.fileId}</span>
             </Field>
             <Field label="Kualitas mesh">
-              <span className={lowQuality ? 'text-amber-300' : 'text-white/80'}>
+              <span className={lowQuality ? 'text-panel-warn' : 'text-panel-fg'}>
                 {s.meshQuality.toFixed(2)}
               </span>
             </Field>
@@ -208,7 +208,7 @@ export function DetailPanel({
 
         {tab === 'ikhtisar' && lowQuality && (
           /* §E3 AC4: indikator kualitas mesh rendah. Batas dataset, bukan bug. */
-          <p className="mt-3 rounded-md border border-amber-400/25 bg-amber-400/10 p-2.5 text-[11px] leading-relaxed text-amber-100/85">
+          <p className="mt-3 rounded-md border border-panel-warn-border bg-panel-warn-bg p-2.5 text-[11px] leading-relaxed text-panel-warn">
             Mesh struktur ini berada di 5% terbawah dataset BodyParts3D (ambang{' '}
             {qualityThreshold.toFixed(2)}). Bentuknya kasar atau terpecah, jadi
             jangan dijadikan acuan bentuk. Struktur ini juga dikecualikan dari soal
@@ -218,8 +218,8 @@ export function DetailPanel({
 
         {tab === 'relasi' && (
           <div className="py-6 text-center">
-            <p className="text-[13px] text-white/55">Belum ada data relasi</p>
-            <p className="mx-auto mt-1.5 max-w-[240px] text-[11px] leading-relaxed text-white/35">
+            <p className="text-[13px] text-panel-muted">Belum ada data relasi</p>
+            <p className="mx-auto mt-1.5 max-w-[240px] text-[11px] leading-relaxed text-panel-subtle">
               Vaskularisasi, inervasi, dan origo/insersio dikurasi di Fase 6 —
               target ≥150 struktur, semuanya bersumber.
             </p>
@@ -228,8 +228,8 @@ export function DetailPanel({
 
         {tab === 'klinis' && (
           <div className="py-6 text-center">
-            <p className="text-[13px] text-white/55">Belum ada catatan klinis</p>
-            <p className="mx-auto mt-1.5 max-w-[240px] text-[11px] leading-relaxed text-white/35">
+            <p className="text-[13px] text-panel-muted">Belum ada catatan klinis</p>
+            <p className="mx-auto mt-1.5 max-w-[240px] text-[11px] leading-relaxed text-panel-subtle">
               Korelasi klinis dikurasi di Fase 6. Catatan tanpa sumber ditolak
               validator dan tidak akan pernah tampil.
             </p>
@@ -237,7 +237,7 @@ export function DetailPanel({
         )}
       </div>
 
-      <p className="shrink-0 border-t border-white/10 px-4 py-2 text-[10px] leading-relaxed text-white/30">
+      <p className="shrink-0 border-t border-panel-border px-4 py-2 text-[10px] leading-relaxed text-panel-subtle">
         Materi edukasi, bukan acuan praktik klinis. Data: BodyParts3D © DBCLS.
       </p>
     </aside>

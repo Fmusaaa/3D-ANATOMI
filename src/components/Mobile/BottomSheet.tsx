@@ -110,7 +110,7 @@ export function BottomSheet({ open, stop, onStopChange, onClose, label, children
   return (
     <section
       aria-label={label}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex flex-col overflow-hidden rounded-t-2xl border-t border-white/12 bg-black/92 backdrop-blur"
+      className="pointer-events-auto absolute inset-x-0 bottom-0 z-30 flex flex-col overflow-hidden rounded-t-2xl border-t border-panel-border bg-panel backdrop-blur"
       style={{ height, transition: dragging ? 'none' : 'height 180ms ease-out' }}
     >
       <div
@@ -127,7 +127,7 @@ export function BottomSheet({ open, stop, onStopChange, onClose, label, children
         onKeyDown={onKeyDown}
         className="flex h-11 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
       >
-        <span className={cn('h-1 w-10 rounded-full bg-white/25')} aria-hidden="true" />
+        <span className={cn('h-1 w-10 rounded-full bg-panel-soft-hover')} aria-hidden="true" />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
     </section>

@@ -79,11 +79,11 @@ export function SystemTree({
         'flex flex-col gap-3 overflow-hidden',
         embedded
           ? 'h-full w-full'
-          : 'pointer-events-auto absolute top-3 bottom-3 left-3 z-10 w-[272px] rounded-xl border border-white/10 bg-black/70 backdrop-blur',
+          : 'pointer-events-auto absolute top-3 bottom-3 left-3 z-10 w-[272px] rounded-xl border border-panel-border bg-panel backdrop-blur',
       )}
     >
       <div className="shrink-0 px-3 pt-3">
-        <h2 className="mb-2 text-[11px] font-semibold tracking-widest text-white/45 uppercase">
+        <h2 className="mb-2 text-[11px] font-semibold tracking-widest text-panel-subtle uppercase">
           Preset
         </h2>
         <div className="flex flex-wrap gap-1">
@@ -98,8 +98,8 @@ export function SystemTree({
               className={cn(
                 'rounded-md px-2.5 py-1.5 text-xs transition-colors',
                 activePreset === p.id
-                  ? 'bg-white/90 font-medium text-black'
-                  : 'bg-white/5 text-white/70 hover:bg-white/12 hover:text-white',
+                  ? 'bg-panel-inverse font-medium text-panel-inverse-fg'
+                  : 'bg-panel-soft text-panel-muted hover:bg-panel-soft-hover hover:text-panel-fg',
               )}
             >
               {p.label}
@@ -109,7 +109,7 @@ export function SystemTree({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-        <h2 className="mb-2 text-[11px] font-semibold tracking-widest text-white/45 uppercase">
+        <h2 className="mb-2 text-[11px] font-semibold tracking-widest text-panel-subtle uppercase">
           Sistem
         </h2>
         <ul className="space-y-2.5">
@@ -125,19 +125,19 @@ export function SystemTree({
                     onCheckedChange={(c) => {
                       onToggle(s.id, c === true)
                     }}
-                    className="mt-0.5 border-white/25 data-[state=checked]:border-white data-[state=checked]:bg-white data-[state=checked]:text-black"
+                    className="mt-0.5 border-panel-border data-[state=checked]:border-panel-fg data-[state=checked]:bg-panel-inverse data-[state=checked]:text-panel-inverse-fg"
                   />
                   <label htmlFor={inputId} className="min-w-0 flex-1 cursor-pointer select-none">
                     <span className="flex items-center gap-1.5">
                       <span
                         aria-hidden="true"
-                        className="size-2.5 shrink-0 rounded-full ring-1 ring-white/20"
+                        className="size-2.5 shrink-0 rounded-full ring-1 ring-panel-border"
                         style={{ background: SYSTEM_SWATCH[s.id] ?? '#888' }}
                       />
                       <span
                         className={cn(
                           'truncate text-[13px] leading-tight',
-                          s.visible ? 'text-white/90' : 'text-white/35',
+                          s.visible ? 'text-panel-fg' : 'text-panel-subtle',
                         )}
                       >
                         {label.la}
@@ -147,16 +147,16 @@ export function SystemTree({
                       <span
                         className={cn(
                           'truncate text-[11px]',
-                          s.visible ? 'text-white/45' : 'text-white/25',
+                          s.visible ? 'text-panel-subtle' : 'text-panel-subtle',
                         )}
                       >
                         {label.id}
                       </span>
-                      <span className="text-[10px] text-white/25 tabular-nums">
+                      <span className="text-[10px] text-panel-subtle tabular-nums">
                         {s.count.toLocaleString('id')}
                       </span>
                       {s.ghosted && (
-                        <span className="rounded bg-white/10 px-1 text-[9px] tracking-wide text-white/50 uppercase">
+                        <span className="rounded bg-panel-soft-hover px-1 text-[9px] tracking-wide text-panel-muted uppercase">
                           ghost
                         </span>
                       )}
@@ -176,7 +176,7 @@ export function SystemTree({
                       onOpacity(s.id, (v[0] ?? 100) / 100)
                     }}
                     aria-label={`Opacity ${label.la}`}
-                    className="[&_[data-slot=slider-range]]:bg-white/70 [&_[data-slot=slider-thumb]]:size-3 [&_[data-slot=slider-thumb]]:border-white/60 [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-track]]:bg-white/12"
+                    className="[&_[data-slot=slider-range]]:bg-panel-fg/70 [&_[data-slot=slider-thumb]]:size-3 [&_[data-slot=slider-thumb]]:border-panel-fg/60 [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-track]]:bg-panel-soft-hover"
                   />
                 </div>
               </li>

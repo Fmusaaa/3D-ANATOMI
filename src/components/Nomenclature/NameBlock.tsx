@@ -28,8 +28,8 @@ export function StatusBadge({
       className={cn(
         'shrink-0 rounded px-1 py-px text-[9px] tracking-wide uppercase',
         status === 'needs-review'
-          ? 'bg-red-400/15 text-red-300/90'
-          : 'bg-amber-400/15 text-amber-300/90',
+          ? 'bg-red-500/15 text-red-600 dark:text-red-300/90'
+          : 'bg-panel-warn-bg text-panel-warn',
         className,
       )}
     >
@@ -59,12 +59,12 @@ export function NameBlock({ name, english }: Props) {
 
   return (
     <div>
-      <p className="text-[10px] tracking-widest text-white/35 uppercase">{label}</p>
+      <p className="text-[10px] tracking-widest text-panel-subtle uppercase">{label}</p>
       {text ? (
         <p className="flex flex-wrap items-baseline gap-1.5">
           <span
             className={cn(
-              'text-[15px] leading-tight font-medium text-white/95',
+              'text-[15px] leading-tight font-medium text-panel-fg',
               // Nama yang belum diverifikasi ditulis miring — pembeda yang
               // tetap terbaca walau badge-nya terlewat.
               name.entry && name.entry.status !== 'reviewed' && 'italic',
@@ -80,7 +80,7 @@ export function NameBlock({ name, english }: Props) {
           katakan belum ada — menampilkan nama Inggris di slot "Latin (TA)"
           akan membuat user menghafal istilah yang salah.
         */
-        <p className="text-[12px] text-white/30 italic">belum ada — perlu kurasi</p>
+        <p className="text-[12px] text-panel-subtle italic">belum ada — perlu kurasi</p>
       )}
     </div>
   )

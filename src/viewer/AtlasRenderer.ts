@@ -111,7 +111,10 @@ export class AtlasRenderer {
   constructor(options: AtlasRendererOptions = {}) {
     this.dataUrl = options.dataUrl ?? '/data'
     this.maxPixelRatio = options.maxPixelRatio ?? 2
-    this.scene.background = new THREE.Color(0x0d0f12) // §8.1 gelap netral
+    // Latar awal gelap (§8.1 default); UI memanggil setBackground() saat tema
+    // berubah. Warnanya WAJIB cocok dengan --canvas-bg di index.css, kalau
+    // tidak akan ada garis beda warna di tepi kanvas.
+    this.scene.background = new THREE.Color(0x0d0f12)
   }
 
   // ------------------------------------------------------------------ mount
@@ -396,6 +399,12 @@ export class AtlasRenderer {
 
   setOpacity(idx: number, opacity: number): void {
     this.state?.setOpacity(idx, opacity)
+    this.requestRender()
+  }
+
+  /** §8.1: latar kanvas mengikuti tema terang/gelap. */
+  setBackground(color: number): void {
+    ;(this.scene.background as THREE.Color | null)?.setHex(color)
     this.requestRender()
   }
 
