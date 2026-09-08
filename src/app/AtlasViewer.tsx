@@ -19,6 +19,14 @@ import {
 } from '@/content/structures'
 import { DetailPanel } from '@/components/DetailPanel/DetailPanel'
 import { HoverTooltip } from '@/components/DetailPanel/HoverTooltip'
+import {
+  DEFAULT_LANGUAGE,
+  loadNomenclature,
+  type LanguageCode,
+  type Nomenclature,
+} from '@/content/nomenclature'
+import { ContributionPanel } from '@/components/Nomenclature/ContributionPanel'
+import { LanguageToggle } from '@/components/Nomenclature/LanguageToggle'
 import { DevOverlay } from '@/components/DevOverlay/DevOverlay'
 import { SearchBar } from '@/components/SearchBar/SearchBar'
 import { SystemTree } from '@/components/SystemTree/SystemTree'
@@ -52,6 +60,9 @@ export function AtlasViewer() {
   /** Toast §E5 AC7: beri tahu kalau sebuah sistem otomatis ditampilkan lagi. */
   const [toast, setToast] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [nomenclature, setNomenclature] = useState<Nomenclature | null>(null)
+  const [language, setLanguage] = useState<LanguageCode>(DEFAULT_LANGUAGE)
+  const [showContrib, setShowContrib] = useState(false)
   /** Hash awal dibaca SEKALI, sebelum apa pun sempat menimpanya. */
   const initialHash = useRef(typeof window === 'undefined' ? '' : window.location.hash)
 
@@ -108,6 +119,13 @@ export function AtlasViewer() {
       .then(setIndex)
       .catch((e: unknown) => {
         setError(e instanceof Error ? e.message : String(e))
+      })
+    // Nomenklatur dimuat terpisah dan boleh gagal tanpa menjatuhkan app:
+    // filenya memang dikurasi bertahap (§E7).
+    void loadNomenclature('/data')
+      .then(setNomenclature)
+      .catch(() => {
+        setNomenclature(null)
       })
 
     return () => {
@@ -191,6 +209,19 @@ export function AtlasViewer() {
       })
   }
 
+  const coverage = nomenclature
+    ? {
+        la: {
+          total: nomenclature.la.size,
+          reviewed: [...nomenclature.la.values()].filter((e) => e.status === 'reviewed').length,
+        },
+        id: {
+          total: nomenclature.id.size,
+          reviewed: [...nomenclature.id.values()].filter((e) => e.status === 'reviewed').length,
+        },
+      }
+    : undefined
+
   const hiddenSystems = new Set(systems.filter((x) => !x.visible).map((x) => x.id))
   const isHidden = (idx: number): boolean => {
     const m = index?.byIdx.get(idx)
@@ -239,7 +270,13 @@ export function AtlasViewer() {
       )}
 
       {ready && index && (
-        <SearchBar index={index} isHidden={isHidden} onPick={handleSearchPick} />
+        <SearchBar
+          index={index}
+          nomenclature={nomenclature}
+          language={language}
+          isHidden={isHidden}
+          onPick={handleSearchPick}
+        />
       )}
 
       {toast && (
@@ -266,6 +303,8 @@ export function AtlasViewer() {
         <DetailPanel
           selected={selected}
           qualityThreshold={index.meshQualityExcludeBelow}
+          nomenclature={nomenclature}
+          language={language}
           onClose={() => {
             rendererRef.current?.clearSelection()
           }}
@@ -277,7 +316,29 @@ export function AtlasViewer() {
 
       {/* Tooltip disembunyikan saat panel detail terbuka supaya tidak menumpuk. */}
       {hover && selected.length === 0 && (
-        <HoverTooltip structure={hovered} x={hover.clientX} y={hover.clientY} />
+        <HoverTooltip
+          structure={hovered}
+          nomenclature={nomenclature}
+          language={language}
+          x={hover.clientX}
+          y={hover.clientY}
+        />
+      )}
+
+      {ready && (
+        <div className="pointer-events-none absolute top-3 right-3 z-20 flex items-center gap-2">
+          <LanguageToggle value={language} onChange={setLanguage} coverage={coverage} />
+          <button
+            type="button"
+            onClick={() => {
+              setShowContrib(true)
+            }}
+            title="Daftar istilah yang perlu direview (§E7 AC5)"
+            className="pointer-events-auto rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-[12px] text-white/60 backdrop-blur hover:text-white/95"
+          >
+            Kontribusi
+          </button>
+        </div>
       )}
 
       {ready && (
@@ -285,13 +346,23 @@ export function AtlasViewer() {
           type="button"
           onClick={handleCopyLink}
           title="Salin tautan tampilan ini"
-          className="pointer-events-auto absolute top-3 right-3 z-20 rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-[12px] text-white/60 backdrop-blur hover:text-white/95"
+          className="pointer-events-auto absolute top-16 right-3 z-20 rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-[12px] text-white/60 backdrop-blur hover:text-white/95"
         >
           {copied ? 'Tersalin ✓' : 'Salin tautan'}
         </button>
       )}
 
       {ready && <ViewToolbar onPreset={handlePreset} onReset={handleReset} />}
+
+      {showContrib && (
+        <ContributionPanel
+          nomenclature={nomenclature}
+          index={index}
+          onClose={() => {
+            setShowContrib(false)
+          }}
+        />
+      )}
 
       {progress && !ready && (
         <div className="pointer-events-none absolute inset-x-0 bottom-10 z-20 flex justify-center">

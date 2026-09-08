@@ -22,6 +22,7 @@ STEPS = [
     ("02_parse_ontology.py", "parse ontologi -> structures_raw.json"),
     ("03_decimate.py", "bersihkan + decimate mesh"),
     ("04_pack_batches.py", "pack .atlas + manifest"),
+    ("06_nomenclature.py", "turunkan nomenklatur Latin & Indonesia (semua `machine`)"),
     ("05_validate.py", "validasi invarian (PRD §11.3)"),
 ]
 

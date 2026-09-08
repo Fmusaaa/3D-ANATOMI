@@ -511,3 +511,70 @@ memberi tahu bahwa sesuatu gagal.
 
 ⚠️ **Jalur sukses tombol salin belum terverifikasi** — lingkungan uji memblokir
 clipboard sepenuhnya. Perlu dicoba manual di browser biasa.
+
+## D-025 — Nomenklatur diturunkan mekanis, SEMUANYA berstatus belum terverifikasi
+
+**Tanggal:** 7 September 2026 · **Fase:** F5 (E7) · **Status:** infrastruktur selesai, konten menunggu review
+
+PRD melarang menggenerasi konten massal dengan LLM lalu menerbitkannya, dan R5
+menandai terjemahan salah sebagai risiko berdampak **sangat tinggi**. Jadi
+pendekatan yang dipakai bukan "LLM menerjemahkan", melainkan **transformasi
+deterministik yang bisa diaudit**:
+
+- tabel kepala frasa dengan **genus** eksplisit (arteria f, nervus m, os n) —
+  genus menentukan bentuk adjektiva yang mengikutinya
+- aturan sufiks Inggris→Latin (-al → -alis, -ic → -icus/ica/icum, ...)
+- daftar pengecualian eksplisit (pulmonary → pulmonalis, BUKAN pulmonarius)
+- **kata di luar kamus membuat seluruh nama dilewati**, bukan diterjemahkan
+  separuh
+
+Hasil: **811 dari 2.851 konsep (28,4%)**. Sisanya sengaja dilewati.
+
+### Dua kesalahan sistematis yang tertangkap saat audit
+
+Ditemukan hanya karena contoh keluarannya benar-benar dibaca, bukan diasumsikan:
+
+1. **Aturan `-ical` salah.** "cervical" jadi *cervica*, menghasilkan
+   `arteria profunda cervica`. Seharusnya *cervicalis*.
+2. **Urutan kata Inggris dipertahankan.** Menghasilkan
+   `arteria superior epigastrica`, padahal TA menulis
+   `arteria epigastrica superior` — adjektiva posisional berdiri SETELAH
+   deskriptif.
+
+Setelah diperbaiki: `arteria cervicalis profunda`, `arteria epigastrica
+superior`, `vertebra thoracica nona`, `arteria femoralis sinistra`.
+
+### Tingkat keyakinan dibedakan
+
+- **`machine` (654)** — satu adjektiva, urutannya pasti
+- **`needs-review` (157)** — lebih dari satu adjektiva deskriptif, urutannya
+  tebakan (Inggris "dorsal scapular artery" vs TA "arteria scapularis
+  dorsalis"). Halaman kontribusi menampilkan yang ini lebih dulu.
+
+### ⚠️ §E7 AC6 TIDAK terpenuhi dan tidak bisa dipenuhi generator
+
+AC6 menuntut status `reviewed`: 100% struktur high-yield punya Latin TA dan
+≥300 punya Indonesia terverifikasi. Saat ini **0 entri terverifikasi**.
+
+Itu bukan kekurangan implementasi — status `reviewed` hanya sah kalau ada
+manusia yang memeriksanya. Validator bahkan menolak `reviewed` tanpa field
+`reviewedBy`, supaya klaim itu selalu bisa dipertanggungjawabkan.
+
+📌 **D4 di PRD §13 jadi relevan sekarang:** mengevaluasi Z-Anatomy (CC BY-SA)
+sebagai sumber nomenklatur Latin bisa menghemat ratusan jam dibanding mereview
+811 entri satu per satu. Keputusan itu jatuh temponya "sebelum F5" dan belum
+diambil.
+
+## D-026 — Cara Indonesia diturunkan: kepala frasa saja
+
+**Tanggal:** 7 September 2026 · **Fase:** F5 · **Status:** diterapkan
+
+Indonesia = kepala frasa di-Indonesiakan, modifier Latin dipertahankan:
+"arteri femoralis sinistra", bukan "arteri paha kiri".
+
+Itu konvensi yang benar-benar dipakai di pendidikan kedokteran Indonesia, dan
+yang diuji di kampus. Menerjemahkan modifier ke bahasa Indonesia sehari-hari
+justru menjauhkan dari istilah yang harus dihafal.
+
+Tetap berstatus `machine` — pilihan kata kepala frasa pun perlu diperiksa
+(mis. "nervus" vs "saraf", "kartilago" vs "tulang rawan" — keduanya dipakai).

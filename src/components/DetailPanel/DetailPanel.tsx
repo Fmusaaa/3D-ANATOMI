@@ -18,6 +18,8 @@ import {
   fmaUrl,
   type StructureMeta,
 } from '@/content/structures'
+import { displayName, type LanguageCode, type Nomenclature } from '@/content/nomenclature'
+import { NameBlock } from '@/components/Nomenclature/NameBlock'
 import { cn } from '@/lib/utils'
 
 type Tab = 'ikhtisar' | 'relasi' | 'klinis'
@@ -31,6 +33,8 @@ const TABS: { id: Tab; label: string }[] = [
 interface Props {
   selected: StructureMeta[]
   qualityThreshold: number
+  nomenclature: Nomenclature | null
+  language: LanguageCode
   onClose: () => void
   onFocus: (idx: number) => void
 }
@@ -48,7 +52,14 @@ function Missing({ children }: { children: React.ReactNode }) {
   return <span className="text-[11px] text-white/30 italic">{children}</span>
 }
 
-export function DetailPanel({ selected, qualityThreshold, onClose, onFocus }: Props) {
+export function DetailPanel({
+  selected,
+  qualityThreshold,
+  nomenclature,
+  language,
+  onClose,
+  onFocus,
+}: Props) {
   const [tab, setTab] = useState<Tab>('ikhtisar')
   if (selected.length === 0) return null
 
@@ -61,21 +72,25 @@ export function DetailPanel({ selected, qualityThreshold, onClose, onFocus }: Pr
   return (
     <aside className="pointer-events-auto absolute top-3 right-3 bottom-3 z-10 flex w-[336px] flex-col overflow-hidden rounded-xl border border-white/10 bg-black/75 backdrop-blur">
       <div className="flex items-start justify-between gap-2 px-4 pt-4">
-        <div className="min-w-0">
+        <div className="min-w-0 space-y-2">
           {/*
-            §E3 AC4 minta nama Latin besar di atas. Belum ada sampai F5 —
-            ditandai eksplisit, bukan diisi nama Inggris yang menyamar.
+            §E3 AC4 + §E7 AC1: bahasa utama tampil besar, dua lainnya sebagai
+            subtitle. Urutannya mengikuti pilihan bahasa, bukan tetap.
           */}
-          <p className="text-[10px] tracking-widest text-white/35 uppercase">Latin (TA)</p>
-          <p className="mb-2 text-[13px] text-amber-300/70 italic">
-            belum dikurasi — Fase 5
-          </p>
-
-          <p className="text-[10px] tracking-widest text-white/35 uppercase">Inggris (FMA)</p>
-          <h2 className="text-[19px] leading-tight font-semibold text-white">{s.name.en}</h2>
-
-          <p className="mt-2 text-[10px] tracking-widest text-white/35 uppercase">Indonesia</p>
-          <p className="text-[13px] text-amber-300/70 italic">belum dikurasi — Fase 5</p>
+          <NameBlock
+            name={displayName(nomenclature, s.fma, s.name.en, language)}
+            english={s.name.en}
+            size="lg"
+          />
+          {(['la', 'id', 'en'] as const)
+            .filter((l) => l !== language)
+            .map((l) => (
+              <NameBlock
+                key={l}
+                name={displayName(nomenclature, s.fma, s.name.en, l)}
+                english={s.name.en}
+              />
+            ))}
         </div>
         <button
           type="button"

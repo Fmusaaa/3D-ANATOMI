@@ -259,7 +259,13 @@ def validate_structures(manifest: dict, in_geometry: set[int]) -> dict:
         else:
             note(f"ambang meshQuality {thr} mengecualikan {n_excl} struktur dari quiz klik")
 
-    return {s["fma"]: s for s in structures}
+    # Konsep COMPOUND ikut dimasukkan: nomenklatur juga menerjemahkannya, dan
+    # tanpa ini validator memuntahkan ratusan warning palsu — yang justru
+    # melatih orang mengabaikan warning.
+    known = {s["fma"]: s for s in structures}
+    for g in doc.get("groups", []):
+        known.setdefault(g["fma"], {"fma": g["fma"], "name": g["name"], "group": True})
+    return known
 
 
 def parse_front_matter(text: str) -> tuple[dict, bool]:
@@ -274,6 +280,82 @@ def parse_front_matter(text: str) -> tuple[dict, bool]:
             k, v = line.split(":", 1)
             fm[k.strip()] = v.strip().strip('"').strip("'")
     return fm, True
+
+
+def validate_nomenclature(by_fma: dict) -> dict[str, dict[str, str]]:
+    """
+    Validasi file nomenklatur (§6.4) dan kembalikan peta fma -> {lang: status}.
+
+    Aturan R5 ditegakkan di sini, bukan diserahkan ke niat baik komponen UI.
+    """
+    nomen: dict[str, dict[str, str]] = {}
+    files = sorted(CONTENT.glob("nomenclature.*.json"))
+    if not files:
+        note("belum ada file nomenklatur — dilewati")
+        return nomen
+
+    valid_status = {"reviewed", "machine", "needs-review"}
+    valid_source = {"TA98", "TA2", "FMA", "curated", "machine"}
+
+    for f in files:
+        lang = f.name.split(".")[1]
+        try:
+            doc = json.loads(f.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            err(f"{f.name}: JSON rusak ({exc})")
+            continue
+
+        entries = doc.get("entries")
+        if not isinstance(entries, list):
+            err(f"{f.name}: field `entries` tidak ada atau bukan list")
+            continue
+
+        seen_fma: set[str] = set()
+        reviewed = machine = needs = 0
+        for e in entries:
+            fma = e.get("fma", "")
+            term = str(e.get("term", "")).strip()
+            status = e.get("status")
+            source = e.get("source")
+
+            if not str(fma).startswith("FMA"):
+                err(f"{f.name}: entri dengan FMA id tidak sah '{fma}'")
+                continue
+            if fma in seen_fma:
+                err(f"{f.name}: FMA {fma} muncul lebih dari sekali")
+            seen_fma.add(fma)
+            if not term:
+                err(f"{f.name}: {fma} punya `term` kosong")
+            if status not in valid_status:
+                err(f"{f.name}: {fma} punya status tidak sah '{status}'")
+            if source not in valid_source:
+                err(f"{f.name}: {fma} punya source tidak sah '{source}'")
+            # Status `reviewed` menuntut jejak siapa yang mereview — tanpa itu
+            # klaim "terverifikasi" tidak bisa dipertanggungjawabkan.
+            if status == "reviewed" and not e.get("reviewedBy"):
+                err(f"{f.name}: {fma} berstatus `reviewed` tanpa field `reviewedBy`")
+            if by_fma and fma not in by_fma:
+                warn(f"{f.name}: {fma} tidak ada di structures.json (grup COMPOUND?)")
+
+            nomen.setdefault(fma, {})[lang] = str(status)
+            if status == "reviewed":
+                reviewed += 1
+            elif status == "needs-review":
+                needs += 1
+            else:
+                machine += 1
+
+        note(
+            f"nomenclature.{lang}: {len(entries)} entri "
+            f"({reviewed} reviewed, {needs} needs-review, {machine} machine)"
+        )
+        if reviewed == 0 and entries:
+            warn(
+                f"nomenclature.{lang}: NOL entri terverifikasi — §E7 AC6 belum "
+                f"terpenuhi, dan quiz tidak akan punya soal yang sah"
+            )
+
+    return nomen
 
 
 def validate_clinical(by_fma: dict) -> None:
@@ -292,18 +374,10 @@ def validate_clinical(by_fma: dict) -> None:
             err(f"clinical/{f.name}: menunjuk FMA {fma} yang tidak ada di structures.json")
 
 
-def validate_quiz(by_fma: dict) -> None:
+def validate_quiz(by_fma: dict, nomen: dict[str, dict[str, str]]) -> None:
     if not QUIZ.exists() or not any(QUIZ.glob("*.json")):
         note("belum ada bank soal — dilewati (aturan berlaku begitu file muncul)")
         return
-
-    nomen: dict[str, dict] = {}
-    for f in CONTENT.glob("nomenclature.*.json"):
-        try:
-            for e in json.loads(f.read_text(encoding="utf-8")).get("entries", []):
-                nomen.setdefault(e["fma"], {})[f.name] = e.get("status")
-        except (json.JSONDecodeError, KeyError) as exc:
-            err(f"{f.name}: tidak bisa dibaca ({exc})")
 
     for f in sorted(QUIZ.glob("*.json")):
         try:
@@ -343,8 +417,9 @@ def main() -> int:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     in_geometry = validate_geometry(manifest)
     by_fma = validate_structures(manifest, in_geometry)
+    nomen = validate_nomenclature(by_fma)
     validate_clinical(by_fma)
-    validate_quiz(by_fma)
+    validate_quiz(by_fma, nomen)
 
     if args.json:
         print(json.dumps({"errors": ERRORS, "warnings": WARNINGS, "notes": NOTES}, indent=1, ensure_ascii=False))

@@ -9,6 +9,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SYSTEM_LABEL, type StructureIndex } from '@/content/structures'
+import { displayName, type LanguageCode, type Nomenclature } from '@/content/nomenclature'
+import { StatusBadge } from '@/components/Nomenclature/NameBlock'
 import { StructureSearch, type SearchHit } from '@/content/search'
 import { cn } from '@/lib/utils'
 
@@ -18,12 +20,14 @@ const MAX_RESULTS = 20
 
 interface Props {
   index: StructureIndex
+  nomenclature: Nomenclature | null
+  language: LanguageCode
   /** structureIdx yang sedang tersembunyi, untuk ikon "terlihat/tersembunyi" (AC4). */
   isHidden: (idx: number) => boolean
   onPick: (idx: number) => void
 }
 
-export function SearchBar({ index, isHidden, onPick }: Props) {
+export function SearchBar({ index, nomenclature, language, isHidden, onPick }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [hits, setHits] = useState<SearchHit[]>([])
@@ -35,8 +39,8 @@ export function SearchBar({ index, isHidden, onPick }: Props) {
 
   // Index dibangun sekali; 3.675 entri.
   const search = useMemo(
-    () => new StructureSearch(index.all, index.groups),
-    [index],
+    () => new StructureSearch(index.all, index.groups, nomenclature),
+    [index, nomenclature],
   )
 
   // §E5 AC6: Cmd/Ctrl+K dari mana saja.
@@ -165,6 +169,7 @@ export function SearchBar({ index, isHidden, onPick }: Props) {
         <ul ref={listRef} role="listbox" className="max-h-[52vh] overflow-y-auto py-1">
           {hits.map((h, i) => {
             const sys = SYSTEM_LABEL[h.entry.system]
+            const primary = displayName(nomenclature, h.entry.fma, h.entry.en, language)
             const hidden = h.entry.members.every(isHidden)
             return (
               <li key={h.entry.id}>
@@ -193,9 +198,18 @@ export function SearchBar({ index, isHidden, onPick }: Props) {
                     )}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] text-white/90">
-                      {h.entry.en}
+                    <span className="flex items-baseline gap-1.5">
+                      <span className="truncate text-[13px] text-white/90">
+                        {primary.text || h.entry.en}
+                      </span>
+                      {primary.entry && <StatusBadge status={primary.entry.status} />}
                     </span>
+                    {/* Nama Inggris tetap ditampilkan sebagai jangkar. */}
+                    {language !== 'en' && primary.text && (
+                      <span className="block truncate text-[10.5px] text-white/40">
+                        {h.entry.en}
+                      </span>
+                    )}
                     <span className="block truncate text-[10.5px] text-white/35">
                       {h.entry.kind === 'group'
                         ? `konsep gabungan · ${String(h.entry.members.length)} mesh`

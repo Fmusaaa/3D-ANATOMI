@@ -3,15 +3,17 @@
  *
  * MiniSearch dipilih di §5.1 karena lebih cepat dari Fuse untuk 3.000+ entri.
  *
- * ⚠️ BATAS JUJUR SAAT INI: nomenklatur Latin TA dan Indonesia baru dikurasi di
- * Fase 5. Sampai itu ada, yang bisa diindeks hanyalah nama Inggris FMA dan
- * FMA ID. Jadi `arteria femoralis` TIDAK akan menemukan "Femoral artery" —
- * bukan karena search-nya lemah, tapi karena datanya memang belum ada.
- * Struktur index sudah menyediakan field `la` dan `id` supaya F5 tinggal
- * mengisi tanpa menyentuh kode ini.
+ * §E7 AC3: index memuat Latin, Indonesia, Inggris, dan FMA ID sekaligus —
+ * pencarian TIDAK terpengaruh bahasa tampilan yang sedang dipilih.
+ *
+ * ⚠️ Cakupan Latin/Indonesia masih parsial dan seluruhnya berstatus `machine`
+ * (lihat scripts/06_nomenclature.py). Istilah yang belum ada entrinya hanya
+ * bisa ditemukan lewat nama Inggris — dan UI mengatakannya terus terang saat
+ * hasilnya nol, bukan membiarkan user mengira pencariannya rusak.
  */
 
 import MiniSearch, { type SearchResult } from 'minisearch'
+import type { Nomenclature } from './nomenclature'
 import type { GroupMeta, StructureMeta } from './structures'
 
 export type EntryKind = 'structure' | 'group'
@@ -99,8 +101,18 @@ export class StructureSearch {
   private readonly byId = new Map<string, SearchEntry>()
   readonly size: number
 
-  constructor(structures: StructureMeta[], groups: GroupMeta[]) {
+  /**
+   * §E7 AC3: index memuat SEMUA bahasa, apa pun bahasa tampilan yang dipilih.
+   * Mencari "arteria femoralis" harus berhasil walau UI sedang bahasa Inggris.
+   */
+  constructor(
+    structures: StructureMeta[],
+    groups: GroupMeta[],
+    nomenclature: Nomenclature | null = null,
+  ) {
     const entries: SearchEntry[] = []
+    const la = (fma: string): string => nomenclature?.la.get(fma)?.term ?? ''
+    const id = (fma: string): string => nomenclature?.id.get(fma)?.term ?? ''
 
     for (const s of structures) {
       entries.push({
@@ -110,8 +122,8 @@ export class StructureSearch {
         members: [s.idx],
         fma: s.fma,
         en: s.name.en,
-        la: '',
-        id_: '',
+        la: la(s.fma),
+        id_: id(s.fma),
         system: s.system,
         synonyms: '',
       })
@@ -127,8 +139,8 @@ export class StructureSearch {
         members: g.members,
         fma: g.fma,
         en: g.name.en,
-        la: '',
-        id_: '',
+        la: la(g.fma),
+        id_: id(g.fma),
         system: '',
         synonyms: '',
       })

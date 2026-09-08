@@ -5,9 +5,10 @@ BodyParts3D (~2.200+ mesh, 15 sistem organ). Target user: **mahasiswa kedokteran
 Indonesia** — bukan viewer umum. Baca `PRD.md` untuk spesifikasi lengkap; file
 ini cuma aturan main yang wajib diingat tiap sesi.
 
-**Status saat ini: Fase 3 selesai.** Pipeline data, renderer, seleksi,
-visibilitas, pencarian 3.675 konsep, dan deep link URL sudah jalan.
-Berikutnya Fase 4 (exploded view) atau Fase 5 (nomenklatur).
+**Status saat ini: Fase 5 (nomenklatur) — infrastruktur selesai, kurasi
+belum.** Pipeline data, renderer, seleksi, visibilitas, pencarian, deep link,
+dan layer nomenklatur Latin/Indonesia sudah jalan. **0 entri terverifikasi** —
+§E7 AC6 menunggu review manusia.
 
 ---
 
@@ -48,6 +49,7 @@ Batas modul di atas **ditegakkan ESLint**, bukan cuma niat — lihat
 | `npm run data:download` | Unduh + verifikasi BodyParts3D ke `data_raw/` |
 | `npm run data:build` | Pipeline Python penuh → `.atlas` + manifest |
 | `npm run validate` | Validasi data (§11.3). Wajib lulus sebelum commit |
+| `python scripts/06_nomenclature.py` | Turunkan nomenklatur (semua `machine`) |
 | `npm run test:data` | 3 suite test data (Python) |
 | `npm test` | Unit test Vitest |
 
@@ -95,8 +97,14 @@ viewer di luar `types.ts`/`events.ts`.
 
 - Jangan tambah dependency 3D baru tanpa nanya.
 - Jangan ubah format `.atlas` tanpa menaikkan versi + update loader + validator.
-- Jangan tampilkan terjemahan berstatus `machine` tanpa badge peringatan, dan
-  jangan pernah pakai sebagai jawaban benar di quiz.
+- Jangan tampilkan terjemahan berstatus `machine`/`needs-review` tanpa badge
+  peringatan, dan jangan pernah pakai sebagai jawaban benar di quiz. Satu-satunya
+  definisi "boleh dipercaya" ada di `isTrustworthy()` (`src/content/nomenclature.ts`)
+  — jangan cek `status === 'reviewed'` tersebar di komponen.
+- Jangan menaikkan status ke `reviewed` tanpa mengisi `reviewedBy`. Validator
+  menolaknya, dan klaim "terverifikasi" harus bisa dipertanggungjawabkan.
+- Jangan biarkan nama satu bahasa jatuh diam-diam ke bahasa lain. Kalau Latin
+  belum ada, tampilkan "belum ada" — bukan nama Inggris yang menyamar.
 - Jangan pakai konten klinis tanpa field `source` — validator menolaknya.
 - Jangan generate konten klinis massal dengan LLM lalu terbitkan. User-nya calon
   dokter. 40 catatan yang benar > 400 yang mungkin salah.
