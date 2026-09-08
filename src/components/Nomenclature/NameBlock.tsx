@@ -42,10 +42,18 @@ interface Props {
   name: DisplayName
   /** Nama Inggris FMA, dipakai kalau bahasa tampilannya `en`. */
   english: string
-  size?: 'lg' | 'sm'
 }
 
-export function NameBlock({ name, english, size = 'sm' }: Props) {
+/**
+ * Ketiga bahasa ditampilkan SEDERAJAT.
+ *
+ * §E7 AC1 semula menetapkan Latin sebagai bahasa utama dengan Indonesia
+ * sebagai subtitle. Diubah atas keputusan product owner (D-027): ketiganya
+ * menunjuk konsep yang sama — yang mengikat mereka adalah FMA ID, bukan
+ * salah satu bahasa. Menaruh satu di atas yang lain menyiratkan hierarki
+ * kebenaran yang tidak ada.
+ */
+export function NameBlock({ name, english }: Props) {
   const label = LANGUAGE_LABEL[name.language]
   const text = name.language === 'en' ? english : name.text
 
@@ -56,8 +64,7 @@ export function NameBlock({ name, english, size = 'sm' }: Props) {
         <p className="flex flex-wrap items-baseline gap-1.5">
           <span
             className={cn(
-              'leading-tight',
-              size === 'lg' ? 'text-[19px] font-semibold text-white' : 'text-[13px] text-white/85',
+              'text-[15px] leading-tight font-medium text-white/95',
               // Nama yang belum diverifikasi ditulis miring — pembeda yang
               // tetap terbaca walau badge-nya terlewat.
               name.entry && name.entry.status !== 'reviewed' && 'italic',

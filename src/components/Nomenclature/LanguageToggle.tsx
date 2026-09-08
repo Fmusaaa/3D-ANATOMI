@@ -1,8 +1,11 @@
 /**
- * Toggle bahasa utama (PRD §E7 AC1).
+ * Pilihan bahasa yang ditampilkan lebih dulu (PRD §E7 AC1, diubah oleh D-027).
  *
- * Default Latin. §E7 AC3 penting untuk dipahami saat membaca ini: toggle ini
- * hanya mengubah TAMPILAN — pencarian selalu menelusuri semua bahasa apa pun
+ * Ini BUKAN "bahasa utama". Ketiga bahasa sederajat; toggle ini hanya
+ * menentukan urutan, dan mana yang muat di tempat sempit (tooltip, satu baris
+ * hasil pencarian) yang secara fisik tidak bisa memuat tiga nama.
+ *
+ * §E7 AC3 tetap berlaku: pencarian selalu menelusuri semua bahasa, apa pun
  * pilihan di sini.
  */
 
@@ -23,17 +26,17 @@ export function LanguageToggle({ value, onChange, coverage }: Props) {
   return (
     <div
       role="radiogroup"
-      aria-label="Bahasa nomenklatur"
+      aria-label="Bahasa yang ditampilkan lebih dulu"
       className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-white/10 bg-black/70 p-1 backdrop-blur"
     >
       {ORDER.map((lang) => {
         const cov = coverage?.[lang]
         const title =
           lang === 'en'
-            ? 'Nama Inggris dari FMA — selalu tersedia'
+            ? 'Tampilkan Inggris lebih dulu — nama FMA, selalu tersedia'
             : cov
-              ? `${LANGUAGE_LABEL[lang]}: ${String(cov.total)} entri, ${String(cov.reviewed)} terverifikasi`
-              : LANGUAGE_LABEL[lang]
+              ? `Tampilkan ${LANGUAGE_LABEL[lang]} lebih dulu — ${String(cov.total)} entri, ${String(cov.reviewed)} terverifikasi`
+              : `Tampilkan ${LANGUAGE_LABEL[lang]} lebih dulu`
         return (
           <button
             key={lang}

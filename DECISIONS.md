@@ -578,3 +578,38 @@ justru menjauhkan dari istilah yang harus dihafal.
 
 Tetap berstatus `machine` — pilihan kata kepala frasa pun perlu diperiksa
 (mis. "nervus" vs "saraf", "kartilago" vs "tulang rawan" — keduanya dipakai).
+
+## D-027 — Tiga bahasa sederajat; §E7 AC1 diubah
+
+**Tanggal:** 7 September 2026 · **Fase:** F5 · **Status:** diputuskan product owner
+
+§E7 AC1 semula: *"Default: Latin, dengan Indonesia sebagai subtitle."*
+
+Product owner: **"semua bahasa dianggap sama, dan yang penting yang dimaksud
+sama."** PRD §0 mengatur kenyataan menang tapi PRD-nya diupdate — ini
+catatannya.
+
+**Perubahan:** ketiga nama (Latin TA, Indonesia, Inggris FMA) ditampilkan
+dengan bobot visual yang sama (15px) di panel detail. Tidak ada yang jadi judul
+dan yang lain jadi subtitle.
+
+**Alasannya bukan sekadar selera.** Yang mengikat ketiga nama itu adalah
+**FMA ID**, bukan salah satu bahasa. Menaruh Latin di atas menyiratkan Latin
+adalah bentuk "sebenarnya" dan yang lain turunannya — padahal ketiganya sama-sama
+label untuk satu konsep yang sama. Untuk alat belajar, hierarki palsu itu
+menyesatkan: mahasiswa yang diuji dalam bahasa Indonesia tidak sedang memakai
+versi "kelas dua".
+
+**Toggle LA/ID/EN tetap ada**, tapi maknanya berubah dari "bahasa utama" jadi
+**"bahasa yang ditampilkan lebih dulu"**. Ia masih diperlukan untuk tempat yang
+secara fisik hanya muat satu nama — tooltip hover dan satu baris hasil
+pencarian.
+
+**Yang TIDAK berubah:**
+- §E7 AC3: pencarian tetap menelusuri semua bahasa apa pun pilihan toggle
+- §E7 AC4: badge status tetap wajib di setiap bahasa yang belum terverifikasi
+- Tidak ada fallback diam-diam antar-bahasa. Kalau Latin belum ada, tertulis
+  "belum ada — perlu kurasi", bukan diisi nama Inggris yang menyamar.
+
+**PRD perlu diupdate** di §E7 AC1 dan §8.2 (mockup panel detail menunjukkan
+"Nervus medianus" besar dengan "Saraf median" kecil di bawahnya).

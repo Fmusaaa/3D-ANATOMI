@@ -105,6 +105,9 @@ viewer di luar `types.ts`/`events.ts`.
   menolaknya, dan klaim "terverifikasi" harus bisa dipertanggungjawabkan.
 - Jangan biarkan nama satu bahasa jatuh diam-diam ke bahasa lain. Kalau Latin
   belum ada, tampilkan "belum ada" — bukan nama Inggris yang menyamar.
+- Jangan menampilkan satu bahasa lebih besar/utama dari yang lain (D-027).
+  Ketiganya sederajat; yang mengikat mereka FMA ID. Toggle LA/ID/EN hanya
+  menentukan urutan dan mana yang muat di tempat sempit.
 - Jangan pakai konten klinis tanpa field `source` — validator menolaknya.
 - Jangan generate konten klinis massal dengan LLM lalu terbitkan. User-nya calon
   dokter. 40 catatan yang benar > 400 yang mungkin salah.

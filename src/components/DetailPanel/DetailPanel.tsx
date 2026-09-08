@@ -72,25 +72,24 @@ export function DetailPanel({
   return (
     <aside className="pointer-events-auto absolute top-3 right-3 bottom-3 z-10 flex w-[336px] flex-col overflow-hidden rounded-xl border border-white/10 bg-black/75 backdrop-blur">
       <div className="flex items-start justify-between gap-2 px-4 pt-4">
-        <div className="min-w-0 space-y-2">
+        <div className="min-w-0 space-y-2.5">
           {/*
-            §E3 AC4 + §E7 AC1: bahasa utama tampil besar, dua lainnya sebagai
-            subtitle. Urutannya mengikuti pilihan bahasa, bukan tetap.
+            D-027: ketiga bahasa SEDERAJAT — tidak ada yang jadi judul dan
+            yang lain jadi subtitle. Yang mengikat ketiganya adalah FMA ID,
+            yang tampil di tab Ikhtisar sebagai jangkar konsepnya.
+
+            Urutan mengikuti pilihan di toggle supaya yang paling sering
+            dipakai ada di atas, tapi bobot visualnya sama.
           */}
-          <NameBlock
-            name={displayName(nomenclature, s.fma, s.name.en, language)}
-            english={s.name.en}
-            size="lg"
-          />
-          {(['la', 'id', 'en'] as const)
-            .filter((l) => l !== language)
-            .map((l) => (
+          {[language, ...(['la', 'id', 'en'] as const).filter((l) => l !== language)].map(
+            (l) => (
               <NameBlock
                 key={l}
                 name={displayName(nomenclature, s.fma, s.name.en, l)}
                 english={s.name.en}
               />
-            ))}
+            ),
+          )}
         </div>
         <button
           type="button"
