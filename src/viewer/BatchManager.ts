@@ -11,6 +11,8 @@ import * as THREE from 'three'
 import {
   FRAGMENT_COLOR,
   FRAGMENT_DECLARATIONS,
+  PICKING_FRAGMENT,
+  PICKING_VERTEX,
   VERTEX_BODY,
   VERTEX_DECLARATIONS,
   VERTEX_NORMAL_BODY,
@@ -83,11 +85,23 @@ function buildPalette(): THREE.DataTexture {
   return tex
 }
 
+/**
+ * Ambang opacity minimum supaya sebuah struktur bisa ter-pick.
+ *
+ * Ghost mode memakai opacity 0,12 (§E4 AC4). Struktur ghost adalah konteks
+ * spasial, bukan target — kalau ikut ter-pick, rangka samar di depan akan
+ * mencuri setiap klik yang ditujukan ke organ di belakangnya.
+ */
+const MIN_PICK_OPACITY = 0.25
+
 interface BatchEntry {
   systemId: string
   geometry: THREE.BufferGeometry
   opaque: THREE.Mesh
   transparent: THREE.Mesh
+  opaqueMaterial: THREE.Material
+  transparentMaterial: THREE.Material
+  picking: THREE.ShaderMaterial
   triangles: number
   bytes: number
 }
@@ -138,6 +152,9 @@ export class BatchManager {
       geometry: g,
       opaque,
       transparent,
+      opaqueMaterial: opaque.material as THREE.Material,
+      transparentMaterial: transparent.material as THREE.Material,
+      picking: this.makePickingMaterial(batch),
       triangles: batch.header.indexCount / 3,
       bytes:
         batch.position.byteLength +
@@ -197,6 +214,43 @@ export class BatchManager {
     return mesh
   }
 
+  private makePickingMaterial(batch: AtlasBatch): THREE.ShaderMaterial {
+    return new THREE.ShaderMaterial({
+      vertexShader: PICKING_VERTEX,
+      fragmentShader: PICKING_FRAGMENT,
+      uniforms: {
+        uQuantScale: { value: new THREE.Vector3(...batch.header.quantScale) },
+        uQuantOffset: { value: new THREE.Vector3(...batch.header.quantOffset) },
+        uStateTex: { value: this.stateTex.texture },
+        uStateTexHeight: { value: this.stateTex.height },
+        uMinPickOpacity: { value: MIN_PICK_OPACITY },
+      },
+      side: THREE.FrontSide,
+    })
+  }
+
+  /**
+   * Tukar material ke/dari mode picking (§5.3.5).
+   *
+   * Tidak bisa pakai `scene.overrideMaterial`: tiap batch punya quantScale
+   * sendiri, sedangkan overrideMaterial hanya satu untuk seluruh scene.
+   *
+   * Saat picking, pass transparan dimatikan dan pass opaque merender SELURUH
+   * geometri — struktur ghost/tersembunyi sudah disaring di dalam shader
+   * picking, jadi tidak perlu disaring dua kali di sini.
+   */
+  setPickingMode(on: boolean): void {
+    for (const e of this.entries) {
+      if (on) {
+        e.opaque.material = e.picking
+        e.transparent.visible = false
+      } else {
+        e.opaque.material = e.opaqueMaterial
+        e.transparent.visible = this.transparentPassEnabled
+      }
+    }
+  }
+
   /**
    * Nyalakan pass transparan hanya kalau memang ada struktur transparan.
    *
@@ -217,8 +271,9 @@ export class BatchManager {
   dispose(): void {
     for (const e of this.entries) {
       e.geometry.dispose()
-      ;(e.opaque.material as THREE.Material).dispose()
-      ;(e.transparent.material as THREE.Material).dispose()
+      e.opaqueMaterial.dispose()
+      e.transparentMaterial.dispose()
+      e.picking.dispose()
     }
     this.entries.length = 0
     this.group.clear()

@@ -16,12 +16,20 @@
 import * as THREE from 'three'
 import { BatchManager, systemIndex } from './BatchManager'
 import { CameraController } from './CameraController'
-import { StateTexture, type SelectStateValue } from './StateTexture'
+import { PickingPass } from './PickingPass'
+import { SelectState, StateTexture, type SelectStateValue } from './StateTexture'
 import { VisibilityController, type SystemState } from './VisibilityController'
 import { VISIBILITY_PRESETS } from './presets'
 import { ViewerEmitter } from './events'
 import { fetchBatch, fetchManifest, type AtlasManifest } from './loaders/AtlasLoader'
 import type { ViewPreset, ViewerStats } from './types'
+
+/** §E3 AC2: hover picking di-throttle <= 20 Hz. */
+const HOVER_INTERVAL_MS = 50
+/** §E3 AC8: multi-select maksimal 8 struktur. */
+const MAX_SELECTION = 8
+/** Gerakan pointer di bawah ambang ini masih dianggap klik, bukan drag. */
+const CLICK_SLOP_PX = 4
 
 /** Dev overlay di-push maksimal 10 Hz (§5.2 aturan 2). */
 const STATS_INTERVAL_MS = 100
@@ -47,6 +55,14 @@ export class AtlasRenderer {
   private batches: BatchManager | null = null
   private state: StateTexture | null = null
   private visibility: VisibilityController | null = null
+  private picking: PickingPass | null = null
+
+  // --- state seleksi: field class, bukan React state (§5.2) ---
+  private hovered: number | null = null
+  private selection: number[] = []
+  private lastHoverAt = 0
+  private cameraMoving = false
+  private pointerDownPos: { x: number; y: number } | null = null
   private resizeObserver: ResizeObserver | null = null
 
   private readonly dataUrl: string
@@ -100,6 +116,14 @@ export class AtlasRenderer {
     const key = new THREE.DirectionalLight(0xffffff, 1.5)
     key.position.set(1, 1.4, 1.2)
     this.scene.add(key)
+
+    this.picking = new PickingPass()
+
+    canvas.addEventListener('pointermove', this.handlePointerMove)
+    canvas.addEventListener('pointerdown', this.handlePointerDown)
+    canvas.addEventListener('pointerup', this.handlePointerUp)
+    canvas.addEventListener('pointerleave', this.handlePointerLeave)
+    window.addEventListener('keydown', this.handleKeyDown)
 
     this.resizeObserver = new ResizeObserver(this.handleResize)
     this.resizeObserver.observe(canvas)
@@ -283,6 +307,137 @@ export class AtlasRenderer {
     this.requestRender()
   }
 
+  // -------------------------------------------------------- seleksi & hover
+
+  /**
+   * Jalankan pass picking untuk satu titik di kanvas.
+   *
+   * WARNING: sinkron dan memaksa GPU stall. Pemanggil bertanggung jawab
+   * menahan frekuensinya (§5.3.5).
+   */
+  private pickAt(clientX: number, clientY: number): number | null {
+    const canvas = this.canvas
+    const renderer = this.renderer
+    const camera = this.camera
+    const batches = this.batches
+    const picking = this.picking
+    if (!canvas || !renderer || !camera || !batches || !picking) return null
+
+    const rect = canvas.getBoundingClientRect()
+    const dpr = renderer.getPixelRatio()
+    const x = Math.floor((clientX - rect.left) * dpr)
+    const y = Math.floor((clientY - rect.top) * dpr)
+    const w = Math.floor(rect.width * dpr)
+    const h = Math.floor(rect.height * dpr)
+    if (x < 0 || y < 0 || x >= w || y >= h) return null
+
+    batches.setPickingMode(true)
+    let idx: number | null = null
+    try {
+      idx = picking.pick(renderer, this.scene, camera.camera, x, y, w, h)
+    } finally {
+      // Wajib dikembalikan walau picking melempar; kalau tidak, scene
+      // ketinggalan memakai material picking dan layar jadi warna index.
+      batches.setPickingMode(false)
+    }
+    if (idx !== null && idx >= this.structureCount) return null
+    return idx
+  }
+
+  private readonly handlePointerMove = (e: PointerEvent): void => {
+    // §E3 AC2: skip TOTAL saat kamera bergerak. readRenderTargetPixels
+    // menghentikan pipeline GPU; melakukannya saat orbit = frame drop terukur.
+    if (this.cameraMoving) return
+    const now = performance.now()
+    if (now - this.lastHoverAt < HOVER_INTERVAL_MS) return
+    this.lastHoverAt = now
+
+    const idx = this.pickAt(e.clientX, e.clientY)
+    if (idx === this.hovered) return
+    this.setHover(idx, e.clientX, e.clientY)
+  }
+
+  private setHover(idx: number | null, clientX: number, clientY: number): void {
+    const state = this.state
+    if (!state) return
+
+    if (this.hovered !== null && !this.selection.includes(this.hovered)) {
+      state.setSelectState(this.hovered, SelectState.Normal)
+    }
+    this.hovered = idx
+    if (idx !== null && !this.selection.includes(idx)) {
+      state.setSelectState(idx, SelectState.Hover)
+    }
+    // §8.4: kursor jadi pointer hanya di atas struktur yang bisa dipilih.
+    if (this.canvas) this.canvas.style.cursor = idx === null ? '' : 'pointer'
+    this.events.emit('hover', idx === null ? null : { idx, clientX, clientY })
+    this.requestRender()
+  }
+
+  private readonly handlePointerDown = (e: PointerEvent): void => {
+    this.pointerDownPos = { x: e.clientX, y: e.clientY }
+  }
+
+  private readonly handlePointerUp = (e: PointerEvent): void => {
+    const down = this.pointerDownPos
+    this.pointerDownPos = null
+    if (!down || e.button !== 0) return
+    // Drag untuk orbit tidak boleh dianggap klik seleksi.
+    if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > CLICK_SLOP_PX) return
+
+    const idx = this.pickAt(e.clientX, e.clientY)
+    if (idx === null) {
+      this.clearSelection() // §E3 AC9: klik area kosong -> deselect
+      return
+    }
+    this.select(idx, e.shiftKey)
+  }
+
+  private readonly handlePointerLeave = (): void => {
+    if (this.hovered !== null) this.setHover(null, 0, 0)
+  }
+
+  private readonly handleKeyDown = (e: KeyboardEvent): void => {
+    // §E3 AC7
+    if (e.key === 'Escape' && this.selection.length > 0) this.clearSelection()
+  }
+
+  /** §E3 AC3 + AC8. Struktur lain TIDAK otomatis di-dim; itu aksi terpisah. */
+  select(idx: number, additive = false): void {
+    const state = this.state
+    if (!state) return
+
+    if (additive) {
+      const at = this.selection.indexOf(idx)
+      if (at >= 0) {
+        this.selection.splice(at, 1)
+        state.setSelectState(idx, SelectState.Normal)
+      } else {
+        if (this.selection.length >= MAX_SELECTION) {
+          const dropped = this.selection.shift()
+          if (dropped !== undefined) state.setSelectState(dropped, SelectState.Normal)
+        }
+        this.selection.push(idx)
+        state.setSelectState(idx, SelectState.Selected)
+      }
+    } else {
+      for (const prev of this.selection) state.setSelectState(prev, SelectState.Normal)
+      this.selection = [idx]
+      state.setSelectState(idx, SelectState.Selected)
+    }
+
+    this.events.emit('selection', [...this.selection])
+    this.requestRender()
+  }
+
+  clearSelection(): void {
+    if (this.selection.length === 0) return
+    for (const idx of this.selection) this.state?.setSelectState(idx, SelectState.Normal)
+    this.selection = []
+    this.events.emit('selection', [])
+    this.requestRender()
+  }
+
   // ------------------------------------------------------------ render loop
 
   /**
@@ -306,6 +461,7 @@ export class AtlasRenderer {
 
     // Kamera bergerak sendiri (damping / animasi preset) -> perlu frame lagi.
     const cameraMoving = camera.update(now)
+    this.cameraMoving = cameraMoving
     const fading = this.visibility?.update(now) ?? false
     if (this.state?.flush()) this.needsRender = true
     if (this.batches?.syncTransparentPass()) this.needsRender = true
@@ -374,6 +530,12 @@ export class AtlasRenderer {
     this.rafId = null
     if (this.statsTimer !== null) clearInterval(this.statsTimer)
     this.statsTimer = null
+    this.canvas?.removeEventListener('pointermove', this.handlePointerMove)
+    this.canvas?.removeEventListener('pointerdown', this.handlePointerDown)
+    this.canvas?.removeEventListener('pointerup', this.handlePointerUp)
+    this.canvas?.removeEventListener('pointerleave', this.handlePointerLeave)
+    window.removeEventListener('keydown', this.handleKeyDown)
+    this.picking?.dispose()
     this.resizeObserver?.disconnect()
     this.camera?.controls.removeEventListener('change', this.requestRender)
     this.camera?.dispose()

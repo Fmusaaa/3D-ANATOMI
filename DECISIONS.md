@@ -364,3 +364,43 @@ Perbaikan: struktur dihitung transparan hanya kalau **terlihat DAN** opacity
 < 0,99. Setelah diperbaiki, preset yang sama menunjukkan 33 draw call dan
 3.027.112 segitiga. Preset dengan ghost (mis. "Organ dalam") memang tetap 66 —
 di situ transparansinya nyata.
+
+## D-017 — Struktur ghost dikecualikan dari picking
+
+**Tanggal:** 7 September 2026 · **Fase:** F2 (E3) · **Status:** diterapkan
+
+§E3 AC10 hanya mewajibkan struktur `visible = false` tidak bisa ter-pick.
+Ditambahkan satu aturan lagi: struktur dengan opacity < 0,25 juga dikecualikan.
+
+Alasannya praktis. Ghost mode (§E4 AC4) memakai opacity 0,12 untuk konteks
+spasial — biasanya rangka. Kalau rangka samar itu ikut ter-pick, ia akan
+mencuri setiap klik yang ditujukan ke organ di belakangnya, dan preset
+"Organ dalam" jadi tidak bisa dipakai sama sekali.
+
+Terverifikasi: pada preset "Organ dalam", klik di dada mengembalikan
+`Hepatovenous segment V`, bukan tulang rusuk yang ada di depannya.
+
+Ambangnya (`MIN_PICK_OPACITY = 0.25`) ada di `BatchManager.ts` dan disaring di
+dalam shader picking, bukan di CPU — jadi mustahil melenceng dari apa yang
+benar-benar terlihat.
+
+## D-018 — Catatan uji: pane browser tersembunyi mematikan rAF
+
+**Tanggal:** 7 September 2026 · **Fase:** F2 · **Status:** catatan metodologi
+
+Muncul untuk KETIGA kalinya (spike D-013, verifikasi F1, lalu E3): saat pane
+browser tersembunyi, `requestAnimationFrame` dan `setTimeout` di-throttle habis.
+
+Konsekuensi khusus untuk pengujian visibilitas: fade 180 ms tidak pernah
+selesai, jadi `visible = false` tidak pernah benar-benar diterapkan dan §E3 AC10
+tampak GAGAL padahal tidak. Gejalanya `visibility.isAnimating === true` yang
+menggantung.
+
+Cara menguji dengan benar tanpa pane terlihat: tuntaskan animasi secara manual
+lebih dulu —
+
+    a.visibility.update(performance.now() + 10000)
+    a.state.flush()
+    a.batches.syncTransparentPass()
+
+Jangan simpulkan AC gagal sebelum memastikan `isAnimating === false`.

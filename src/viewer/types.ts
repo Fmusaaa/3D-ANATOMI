@@ -79,6 +79,13 @@ export interface ViewerStats {
   transparentPass: boolean
 }
 
+/** Struktur yang sedang di-hover, plus posisi kursor untuk tooltip (§E3 AC1). */
+export interface HoverInfo {
+  idx: number
+  clientX: number
+  clientY: number
+}
+
 export interface ViewerHandle {
   setPreset(preset: ViewPreset): void
   resetView(): void

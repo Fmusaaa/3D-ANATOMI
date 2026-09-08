@@ -5,8 +5,9 @@ BodyParts3D (~2.200+ mesh, 15 sistem organ). Target user: **mahasiswa kedokteran
 Indonesia** — bukan viewer umum. Baca `PRD.md` untuk spesifikasi lengkap; file
 ini cuma aturan main yang wajib diingat tiap sesi.
 
-**Status saat ini: Fase 1 (renderer inti).** Pipeline data selesai; renderer
-menampilkan model lengkap dengan orbit, preset view, dan dev overlay.
+**Status saat ini: Fase 2 (seleksi & visibilitas).** Pipeline data selesai;
+renderer menampilkan model lengkap dengan orbit, preset view, kontrol
+visibilitas per sistem, GPU picking, dan panel detail.
 
 ---
 
@@ -60,6 +61,8 @@ Butuh venv sendiri: `pip install -r scripts/requirements.txt`.
 | `BatchManager.ts` | Geometri + material per batch. Palet sistem. Skip pass transparan |
 | `StateTexture.ts` | State per struktur (visible/select/opacity/system) |
 | `CameraController.ts` | OrbitControls, preset, fly-to sferis, batas zoom |
+| `PickingPass.ts` | GPU picking 1x1. `readRenderTargetPixels` = stall sinkron |
+| `VisibilityController.ts` | Visibilitas/opacity per sistem + fade 180 ms |
 | `loaders/AtlasLoader.ts` | Parse `.atlas`, tolak file rusak dengan pesan jelas |
 | `shaders/atlasChunks.ts` | Potongan GLSL. `octDecode` WAJIB pakai `signNotZero` |
 | `types.ts`, `events.ts` | **Satu-satunya** yang boleh diimpor `src/components/**` |
@@ -80,6 +83,12 @@ viewer di luar `types.ts`/`events.ts`.
 - **Statistik dev overlay tidak boleh hanya di-push dari render loop.** Kalau
   loop berhenti, angkanya membeku dan justru menyembunyikan bukti idle. Ada
   detak `setInterval` terpisah yang hanya meng-emit, tidak pernah merender.
+- **`scene.overrideMaterial` tidak bisa dipakai untuk picking.** Tiap batch
+  punya `quantScale` sendiri; `BatchManager.setPickingMode()` menukar material
+  per mesh.
+- **Pane browser tersembunyi mematikan rAF dan meng-clamp `setTimeout`.** Fade
+  visibilitas jadi menggantung dan AC terlihat gagal padahal tidak. Lihat D-018
+  untuk cara menguji yang benar.
 
 ## Jangan
 

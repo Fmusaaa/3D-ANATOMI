@@ -51,7 +51,7 @@ export function DevOverlay({ stats, onClose }: Props) {
   const idle = stats.rendersLastSecond === 0
 
   return (
-    <div className="pointer-events-auto absolute top-3 right-3 z-20 w-60 rounded-lg border border-white/10 bg-black/70 p-3 font-mono text-[11px] leading-5 backdrop-blur">
+    <div className="pointer-events-auto absolute bottom-3 left-3 z-20 w-60 rounded-lg border border-white/10 bg-black/70 p-3 font-mono text-[11px] leading-5 backdrop-blur">
       <div className="mb-1.5 flex items-center justify-between">
         <span className="font-semibold tracking-wide text-white/70">DEV</span>
         {onClose && (

@@ -11,12 +11,21 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
+import { loadStructures, type StructureIndex, type StructureMeta } from '@/content/structures'
+import { DetailPanel } from '@/components/DetailPanel/DetailPanel'
+import { HoverTooltip } from '@/components/DetailPanel/HoverTooltip'
 import { DevOverlay } from '@/components/DevOverlay/DevOverlay'
 import { SystemTree } from '@/components/SystemTree/SystemTree'
 import { ViewToolbar } from '@/components/ViewToolbar/ViewToolbar'
 import { AtlasRenderer } from '@/viewer/AtlasRenderer'
 import { VISIBILITY_PRESETS } from '@/viewer/presets'
-import type { LoadProgress, SystemState, ViewPreset, ViewerStats } from '@/viewer/types'
+import type {
+  HoverInfo,
+  LoadProgress,
+  SystemState,
+  ViewPreset,
+  ViewerStats,
+} from '@/viewer/types'
 
 export function AtlasViewer() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -29,6 +38,9 @@ export function AtlasViewer() {
   const [showOverlay, setShowOverlay] = useState(true)
   const [systems, setSystems] = useState<SystemState[]>([])
   const [activePreset, setActivePreset] = useState<string | null>('semua')
+  const [index, setIndex] = useState<StructureIndex | null>(null)
+  const [hover, setHover] = useState<HoverInfo | null>(null)
+  const [selection, setSelection] = useState<number[]>([])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -45,13 +57,27 @@ export function AtlasViewer() {
         setProgress(null)
       }),
       renderer.events.on('systems', setSystems),
+      renderer.events.on('hover', setHover),
+      renderer.events.on('selection', setSelection),
       renderer.events.on('error', (e) => {
         setError(e.message)
       }),
     ]
 
     renderer.mount(canvas)
+    // Handle dev-only: dipakai untuk debugging manual dan nanti untuk e2e
+    // Playwright (§11.2). Tidak ikut di build produksi.
+    if (import.meta.env.DEV) {
+      ;(globalThis as unknown as { __ATLAS__?: AtlasRenderer }).__ATLAS__ = renderer
+    }
     void renderer.load()
+    // Metadata nama/sistem/regio dimuat paralel dengan geometri; keduanya
+    // tidak saling menunggu.
+    void loadStructures('/data')
+      .then(setIndex)
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : String(e))
+      })
 
     return () => {
       for (const fn of off) fn()
@@ -78,6 +104,14 @@ export function AtlasViewer() {
     rendererRef.current?.applyPreset(presetId)
     setActivePreset(presetId)
   }
+
+  const hovered = hover && index ? (index.byIdx.get(hover.idx) ?? null) : null
+  const selected: StructureMeta[] = index
+    ? selection.flatMap((i) => {
+        const m = index.byIdx.get(i)
+        return m ? [m] : []
+      })
+    : []
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0d0f12]">
@@ -110,6 +144,24 @@ export function AtlasViewer() {
           onOpacity={handleOpacity}
           onPreset={handleVisibilityPreset}
         />
+      )}
+
+      {ready && index && (
+        <DetailPanel
+          selected={selected}
+          qualityThreshold={index.meshQualityExcludeBelow}
+          onClose={() => {
+            rendererRef.current?.clearSelection()
+          }}
+          onFocus={(idx) => {
+            rendererRef.current?.select(idx)
+          }}
+        />
+      )}
+
+      {/* Tooltip disembunyikan saat panel detail terbuka supaya tidak menumpuk. */}
+      {hover && selected.length === 0 && (
+        <HoverTooltip structure={hovered} x={hover.clientX} y={hover.clientY} />
       )}
 
       {ready && <ViewToolbar onPreset={handlePreset} onReset={handleReset} />}

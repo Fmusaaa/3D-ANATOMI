@@ -124,30 +124,53 @@ export const FRAGMENT_COLOR = /* glsl */ `
   diffuseColor.a *= vOpacity;
 `
 
-/** Material picking (§5.3.5): tulis structureIdx sebagai warna 24-bit. */
+/**
+ * Material picking (§5.3.5): tulis `structureIdx` sebagai warna 24-bit.
+ *
+ * ⚠️ TIDAK bisa dipakai lewat `scene.overrideMaterial`, karena tiap batch punya
+ * `quantScale`/`quantOffset` sendiri dan overrideMaterial hanya satu untuk
+ * seluruh scene. `BatchManager` menukar material per mesh selama pass picking.
+ */
 export const PICKING_VERTEX = /* glsl */ `
 attribute vec2 aOctNormal;
 attribute float aStructureIdx;
+
 uniform vec3 uQuantScale;
 uniform vec3 uQuantOffset;
 uniform sampler2D uStateTex;
 uniform float uStateTexHeight;
+uniform float uMinPickOpacity;
+
 varying float vIdx;
 
-${STATE_LOOKUP_GLSL.replace('uniform sampler2D uStateTex;\nuniform float uStateTexHeight;\n', '')}
+vec4 readState(float idx) {
+  float x = mod(idx, 256.0) + 0.5;
+  float y = floor(idx / 256.0) + 0.5;
+  return texture2D(uStateTex, vec2(x / 256.0, y / uStateTexHeight));
+}
 
 void main() {
   vIdx = aStructureIdx;
   vec4 state = readState(aStructureIdx);
   vec3 p = position * uQuantScale + uQuantOffset;
-  // Struktur invisible ikut ter-cull, jadi tidak bisa ter-pick (§E3 AC10).
-  if (state.r < 0.5) p = vec3(1e10);
+
+  // §E3 AC10: struktur tersembunyi tidak bisa ter-pick — dicull dengan shader
+  // yang sama, jadi mustahil melenceng dari yang terlihat.
+  //
+  // Struktur ghost (opacity rendah) juga dikecualikan: ia konteks spasial,
+  // bukan target. Kalau ikut ter-pick, rangka samar di depan akan mencuri
+  // setiap klik yang ditujukan ke organ di belakangnya.
+  if (state.r < 0.5 || state.b < uMinPickOpacity) {
+    p = vec3(1e10);
+  }
+
   gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
 }
 `
 
 export const PICKING_FRAGMENT = /* glsl */ `
 varying float vIdx;
+
 void main() {
   float idx = floor(vIdx + 0.5);
   gl_FragColor = vec4(

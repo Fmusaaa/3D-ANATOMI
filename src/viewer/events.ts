@@ -8,7 +8,7 @@
  * Bebas three.js dan bebas React — boleh diimpor `src/components/**`.
  */
 
-import type { LoadProgress, SystemState, ViewerStats } from './types'
+import type { HoverInfo, LoadProgress, SystemState, ViewerStats } from './types'
 
 export interface ViewerEvents {
   /** Di-throttle maksimal 10 Hz (§5.2 aturan 2). Jangan pernah per-frame. */
@@ -17,6 +17,13 @@ export interface ViewerEvents {
   ready: { structures: number; triangles: number }
   /** Status visibilitas/opacity tiap sistem, setelah setiap perubahan. */
   systems: SystemState[]
+  /**
+   * Hover berubah. Sengaja di-emit HANYA saat structureIdx-nya berganti,
+   * bukan tiap gerakan mouse — §5.2 melarang state per-frame masuk React.
+   */
+  hover: HoverInfo | null
+  /** Seleksi berubah. Urutan = urutan klik (§E3 AC8, maks 8). */
+  selection: number[]
   error: { message: string; cause?: unknown }
 }
 
