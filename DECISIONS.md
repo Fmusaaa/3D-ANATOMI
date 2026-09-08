@@ -670,3 +670,69 @@ Perbaikannya kecil: tambahkan `region` ke entri struktur di header `.atlas`
 (`04_pack_batches.py`), naikkan versi format, update loader dan validator.
 Belum dikerjakan karena menyentuh format `.atlas` dan CLAUDE.md melarang itu
 dilakukan tanpa menaikkan versi + update loader + validator sekaligus.
+
+## D-031 — CSS tanpa `@layer` mengalahkan utility Tailwind
+
+**Tanggal:** 7 September 2026 · **Fase:** F8 · **Status:** diperbaiki
+
+Aturan target sentuh §E11 AC3 ditulis sebagai CSS biasa di akhir `index.css`,
+di luar `@layer` apa pun. Isinya termasuk `button { position: relative }`.
+
+**CSS tanpa layer menang atas CSS ber-layer, apa pun specificity-nya.** Jadi
+`position: relative` itu menimpa `.absolute` milik Tailwind, dan SEMUA tombol
+mengambang (search, Sistem, Salin tautan) kehilangan posisi absolutnya lalu
+jatuh ke bawah viewport.
+
+Gejalanya terlihat seperti bug layout mobile — padahal sebabnya urutan cascade,
+dan hanya muncul di `pointer: coarse` sehingga tidak pernah terlihat di desktop.
+
+Perbaikan: bungkus dalam `@layer base`, supaya utility Tailwind tetap menang.
+
+## D-032 — Target sentuh diperbesar lewat zona, bukan lewat ukuran visual
+
+**Tanggal:** 7 September 2026 · **Fase:** F8 · **Status:** diterapkan
+
+§E11 AC3 menuntut target sentuh >= 44x44 px. Audit awal: **27 dari 34** elemen
+interaktif di bawah itu.
+
+Memaksa semua tombol jadi 44 px membuat UI desktop bengkak tanpa alasan — yang
+dituju AC ini adalah "bisa ditekan jari". Jadi:
+
+- hanya berlaku pada `@media (pointer: coarse)`
+- zona ketuk diperbesar lewat pseudo-element, ukuran visual tombol tidak berubah
+
+Terverifikasi di viewport 375x812: tombol "Sistem" visualnya 64x37 px, tapi
+ketukan di 21 px atas/bawah/kiri dari pusatnya tetap mengenai tombol itu.
+
+## D-033 — Tinggi bottom sheet memakai `dvh`, bukan `window.innerHeight`
+
+**Tanggal:** 7 September 2026 · **Fase:** F8 · **Status:** diterapkan
+
+Versi pertama menyimpan tinggi viewport di React state dan menghitung tinggi
+tiap tahap dalam piksel. Itu kelas bug yang bisa dihindari sepenuhnya: di HP,
+bar URL yang muncul-hilang mengubah tinggi viewport terus-menerus, sehingga
+angka hasil pengukuran JS langsung basi.
+
+`dvh` ada persis untuk ini. Tahapnya sekarang `72px` / `50dvh` / `88dvh`.
+
+Terverifikasi di 375x812: peek 72, half 406, full 715 — cocok persis.
+
+## D-034 — Perluasan D-018: transisi CSS juga BEKU di pane tersembunyi
+
+**Tanggal:** 7 September 2026 · **Fase:** F8 · **Status:** catatan metodologi
+
+D-018 mencatat rAF dan `setTimeout` ter-throttle saat pane browser tersembunyi.
+Ternyata **transisi CSS juga**: `element.getAnimations()` menunjukkan
+`CSSTransition` dengan `playState: "running"` tapi `currentTime: 0` yang tidak
+pernah maju.
+
+Akibatnya elemen membeku di nilai SEBELUM transisi, dan pengukuran tinggi
+memberi angka yang salah secara konsisten — cukup meyakinkan untuk memancing
+perburuan bug yang panjang ke arah yang salah.
+
+Cara menguji dengan benar:
+
+    el.getAnimations().forEach(a => a.finish())
+
+lalu ukur. Atau matikan transisinya dulu. Jangan simpulkan ada bug layout
+sebelum memastikan tidak ada transisi yang menggantung.

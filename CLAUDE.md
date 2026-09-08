@@ -89,9 +89,13 @@ viewer di luar `types.ts`/`events.ts`.
 - **`scene.overrideMaterial` tidak bisa dipakai untuk picking.** Tiap batch
   punya `quantScale` sendiri; `BatchManager.setPickingMode()` menukar material
   per mesh.
-- **Pane browser tersembunyi mematikan rAF dan meng-clamp `setTimeout`.** Fade
-  visibilitas jadi menggantung dan AC terlihat gagal padahal tidak. Lihat D-018
-  untuk cara menguji yang benar.
+- **Pane browser tersembunyi membekukan rAF, `setTimeout`, DAN transisi CSS.**
+  Fade visibilitas menggantung dan tinggi elemen membeku di nilai sebelum
+  transisi — AC terlihat gagal padahal tidak. Sebelum menyimpulkan ada bug,
+  jalankan `el.getAnimations().forEach(a => a.finish())`. Lihat D-018 & D-034.
+- **CSS tambahan WAJIB di dalam `@layer`.** CSS tanpa layer mengalahkan utility
+  Tailwind apa pun specificity-nya; `button { position: relative }` tanpa layer
+  pernah menimpa `.absolute` dan menjatuhkan semua tombol mengambang (D-031).
 
 ## Jangan
 

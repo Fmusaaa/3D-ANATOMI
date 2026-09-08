@@ -29,7 +29,9 @@ export function ViewToolbar({ onPreset, onReset, disabled }: Props) {
     <div
       role="toolbar"
       aria-label="Sudut pandang"
-      className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/10 bg-black/70 p-1.5 backdrop-blur"
+      // Di layar sempit 7 tombol tidak muat; biarkan menggulung horizontal
+      // alih-alih meluber keluar viewport (§E11 AC1).
+      className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-xl border border-white/10 bg-black/70 p-1.5 backdrop-blur"
     >
       {VIEW_PRESETS.map((p) => (
         <Button
@@ -44,7 +46,7 @@ export function ViewToolbar({ onPreset, onReset, disabled }: Props) {
           title={VIEW_PRESET_LABELS[p]}
           aria-label={VIEW_PRESET_LABELS[p]}
           // §E11 AC3: target sentuh ≥ 44×44 px.
-          className="h-11 min-w-11 px-3 text-white/75 hover:bg-white/10 hover:text-white"
+          className="h-11 min-w-11 shrink-0 px-3 text-white/75 hover:bg-white/10 hover:text-white"
         >
           {SHORT[p]}
         </Button>

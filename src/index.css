@@ -85,3 +85,81 @@
     @apply bg-background text-foreground;
   }
 }
+
+/*
+ * §E11 AC3 — target sentuh >= 44x44 px.
+ *
+ * Ditegakkan HANYA pada pointer kasar (jari), bukan di desktop. Memaksa 44 px
+ * di layar mouse bikin UI bengkak tanpa alasan; yang dituju AC ini adalah
+ * "bisa ditekan jari", dan `pointer: coarse` persis sinyal itu.
+ *
+ * ⚠️ WAJIB di dalam `@layer base`.
+ *
+ * CSS tanpa layer MENGALAHKAN utility Tailwind yang ber-layer, apa pun
+ * specificity-nya. Versi pertama aturan ini tidak ber-layer, sehingga
+ * `position: relative` di sini menimpa `.absolute` milik Tailwind — semua
+ * tombol mengambang (search, Sistem, Salin tautan) kehilangan posisi
+ * absolutnya dan jatuh ke bawah viewport. Kelihatan seperti bug layout
+ * mobile, padahal sebabnya urutan cascade.
+ */
+@layer base {
+  @media (pointer: coarse) {
+    button,
+    a[href],
+    [role='radio'],
+    [role='option'],
+    [role='tab'] {
+      position: relative;
+    }
+
+    /* Perbesar zona ketuk tanpa mengubah tampilan visual tombol. */
+    button::after,
+    a[href]::after,
+    [role='radio']::after,
+    [role='option']::after,
+    [role='tab']::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      min-width: 44px;
+      min-height: 44px;
+      width: 100%;
+      height: 100%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Slider butuh thumb yang benar-benar besar, bukan sekadar zona. */
+    [data-slot='slider-thumb'] {
+      width: 22px;
+      height: 22px;
+    }
+    [data-slot='slider-track'] {
+      height: 6px;
+    }
+  }
+}
+
+/*
+ * §E11 AC9 — mode kurangi gerakan.
+ *
+ * Animasi kamera & fade visibilitas sudah dihormati di sisi viewer
+ * (CameraController, VisibilityController). Ini menutup sisanya: transisi CSS.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Fokus keyboard harus selalu terlihat (§E11 AC6). */
+:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+  border-radius: 4px;
+}

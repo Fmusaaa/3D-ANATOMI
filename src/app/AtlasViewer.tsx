@@ -27,6 +27,9 @@ import {
 } from '@/content/nomenclature'
 import { ContributionPanel } from '@/components/Nomenclature/ContributionPanel'
 import { LanguageToggle } from '@/components/Nomenclature/LanguageToggle'
+import { BottomSheet, type SheetStop } from '@/components/Mobile/BottomSheet'
+import { Drawer } from '@/components/Mobile/Drawer'
+import { detectCapability, useIsMobile, type DeviceCapability } from '@/lib/device'
 import { ExplodeControl } from '@/components/ExplodeControl/ExplodeControl'
 import { DevOverlay } from '@/components/DevOverlay/DevOverlay'
 import { SearchBar } from '@/components/SearchBar/SearchBar'
@@ -65,6 +68,11 @@ export function AtlasViewer() {
   const [language, setLanguage] = useState<LanguageCode>(DEFAULT_LANGUAGE)
   const [showContrib, setShowContrib] = useState(false)
   const [explode, setExplode] = useState(0)
+  const isMobile = useIsMobile()
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [sheetStop, setSheetStop] = useState<SheetStop>('half')
+  const [capability, setCapability] = useState<DeviceCapability | null>(null)
+  const [capabilityDismissed, setCapabilityDismissed] = useState(false)
   /** Hash awal dibaca SEKALI, sebelum apa pun sempat menimpanya. */
   const initialHash = useRef(typeof window === 'undefined' ? '' : window.location.hash)
 
@@ -102,13 +110,19 @@ export function AtlasViewer() {
       }),
       renderer.events.on('systems', setSystems),
       renderer.events.on('hover', setHover),
-      renderer.events.on('selection', setSelection),
+      renderer.events.on('selection', (sel) => {
+        setSelection(sel)
+        if (sel.length > 0) setSheetStop((v) => (v === 'peek' ? 'half' : v))
+      }),
       renderer.events.on('error', (e) => {
         setError(e.message)
       }),
     ]
 
     renderer.mount(canvas)
+    // §E11 AC4: deteksi kemampuan perangkat sekali di awal. Kalau terbatas,
+    // user diberi tahu — bukan didegradasi diam-diam.
+    setCapability(detectCapability(canvas.getContext('webgl2')))
     // Handle dev-only: dipakai untuk debugging manual dan nanti untuk e2e
     // Playwright (§11.2). Tidak ikut di build produksi.
     if (import.meta.env.DEV) {
@@ -271,7 +285,7 @@ export function AtlasViewer() {
         role="img"
       />
 
-      {showOverlay && (
+      {showOverlay && !isMobile && (
         <DevOverlay
           stats={stats}
           onClose={() => {
@@ -299,7 +313,8 @@ export function AtlasViewer() {
         </div>
       )}
 
-      {ready && (
+      {/* §E11 AC1: < 768 px -> tree jadi drawer, panel jadi bottom sheet. */}
+      {ready && !isMobile && (
         <SystemTree
           systems={systems}
           presets={VISIBILITY_PRESETS}
@@ -310,7 +325,40 @@ export function AtlasViewer() {
         />
       )}
 
-      {ready && index && (
+      {ready && isMobile && (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setDrawerOpen(true)
+            }}
+            aria-label="Buka panel sistem"
+            aria-expanded={drawerOpen}
+            className="pointer-events-auto absolute top-3 left-3 z-20 rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-[13px] text-white/80 backdrop-blur"
+          >
+            Sistem
+          </button>
+          <Drawer
+            open={drawerOpen}
+            label="Sistem & preset"
+            onClose={() => {
+              setDrawerOpen(false)
+            }}
+          >
+            <SystemTree
+              systems={systems}
+              presets={VISIBILITY_PRESETS}
+              activePreset={activePreset}
+              onToggle={handleToggle}
+              onOpacity={handleOpacity}
+              onPreset={handleVisibilityPreset}
+              variant="embedded"
+            />
+          </Drawer>
+        </>
+      )}
+
+      {ready && index && !isMobile && (
         <DetailPanel
           selected={selected}
           qualityThreshold={index.meshQualityExcludeBelow}
@@ -323,6 +371,32 @@ export function AtlasViewer() {
             rendererRef.current?.select(idx)
           }}
         />
+      )}
+
+      {ready && index && isMobile && (
+        <BottomSheet
+          open={selected.length > 0}
+          stop={sheetStop}
+          onStopChange={setSheetStop}
+          label="Detail struktur"
+          onClose={() => {
+            rendererRef.current?.clearSelection()
+          }}
+        >
+          <DetailPanel
+            selected={selected}
+            qualityThreshold={index.meshQualityExcludeBelow}
+            nomenclature={nomenclature}
+            language={language}
+            variant="embedded"
+            onClose={() => {
+              rendererRef.current?.clearSelection()
+            }}
+            onFocus={(idx) => {
+              rendererRef.current?.select(idx)
+            }}
+          />
+        </BottomSheet>
       )}
 
       {/* Tooltip disembunyikan saat panel detail terbuka supaya tidak menumpuk. */}
@@ -363,7 +437,7 @@ export function AtlasViewer() {
         </button>
       )}
 
-      {ready && (
+      {ready && !isMobile && (
         <ExplodeControl
           value={explode}
           visibleCount={systems.reduce((n, x) => n + (x.visible ? x.count : 0), 0)}
@@ -382,6 +456,29 @@ export function AtlasViewer() {
             setShowContrib(false)
           }}
         />
+      )}
+
+      {ready && capability?.limited && !capabilityDismissed && (
+        <div
+          role="status"
+          className="pointer-events-auto absolute inset-x-3 bottom-3 z-30 rounded-lg border border-amber-400/25 bg-amber-950/80 p-3 text-[12px] leading-relaxed text-amber-100/90 backdrop-blur sm:inset-x-auto sm:right-3 sm:max-w-sm"
+        >
+          <p className="font-medium">Perangkat ini terbatas</p>
+          <p className="mt-1 opacity-85">
+            Terdeteksi {capability.reasons.join(' · ')}. Model penuh (3 juta
+            segitiga) mungkin berat. Sembunyikan sistem yang tidak dipakai lewat
+            panel Sistem untuk meringankan.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setCapabilityDismissed(true)
+            }}
+            className="mt-2 rounded border border-amber-400/30 px-2 py-1 text-[11px] hover:bg-amber-400/10"
+          >
+            Mengerti
+          </button>
+        </div>
       )}
 
       {progress && !ready && (

@@ -37,6 +37,8 @@ interface Props {
   language: LanguageCode
   onClose: () => void
   onFocus: (idx: number) => void
+  /** `embedded` menghilangkan posisi absolut supaya muat di bottom sheet. */
+  variant?: 'floating' | 'embedded' | undefined
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -59,6 +61,7 @@ export function DetailPanel({
   language,
   onClose,
   onFocus,
+  variant = 'floating',
 }: Props) {
   const [tab, setTab] = useState<Tab>('ikhtisar')
   if (selected.length === 0) return null
@@ -70,7 +73,14 @@ export function DetailPanel({
   const lowQuality = s.meshQuality < qualityThreshold
 
   return (
-    <aside className="pointer-events-auto absolute top-3 right-3 bottom-3 z-10 flex w-[336px] flex-col overflow-hidden rounded-xl border border-white/10 bg-black/75 backdrop-blur">
+    <aside
+      className={cn(
+        'flex flex-col overflow-hidden',
+        variant === 'embedded'
+          ? 'h-full w-full'
+          : 'pointer-events-auto absolute top-3 right-3 bottom-3 z-10 w-[336px] rounded-xl border border-white/10 bg-black/75 backdrop-blur',
+      )}
+    >
       <div className="flex items-start justify-between gap-2 px-4 pt-4">
         <div className="min-w-0 space-y-2.5">
           {/*

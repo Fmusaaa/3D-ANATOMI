@@ -17,6 +17,8 @@ interface Props {
   onToggle: (systemId: string, visible: boolean) => void
   onOpacity: (systemId: string, opacity: number) => void
   onPreset: (presetId: string) => void
+  /** `embedded` menghilangkan posisi absolut supaya muat di drawer (§E11 AC1). */
+  variant?: 'floating' | 'embedded' | undefined
 }
 
 /**
@@ -65,11 +67,21 @@ export function SystemTree({
   onToggle,
   onOpacity,
   onPreset,
+  variant = 'floating',
 }: Props) {
   if (systems.length === 0) return null
 
+  const embedded = variant === 'embedded'
+
   return (
-    <aside className="pointer-events-auto absolute top-3 bottom-3 left-3 z-10 flex w-[272px] flex-col gap-3 overflow-hidden rounded-xl border border-white/10 bg-black/70 backdrop-blur">
+    <aside
+      className={cn(
+        'flex flex-col gap-3 overflow-hidden',
+        embedded
+          ? 'h-full w-full'
+          : 'pointer-events-auto absolute top-3 bottom-3 left-3 z-10 w-[272px] rounded-xl border border-white/10 bg-black/70 backdrop-blur',
+      )}
+    >
       <div className="shrink-0 px-3 pt-3">
         <h2 className="mb-2 text-[11px] font-semibold tracking-widest text-white/45 uppercase">
           Preset
