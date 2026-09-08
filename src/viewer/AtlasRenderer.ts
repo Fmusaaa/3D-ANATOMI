@@ -79,6 +79,10 @@ export class AtlasRenderer {
   private lastStatsPush = 0
   private statsTimer: ReturnType<typeof setInterval> | null = null
   private structureCount = 0
+  /** bbox per struktur (ruang dunia) untuk fly-to §E5 AC7. */
+  private readonly structureBounds = new Map<number, THREE.Sphere>()
+  /** structureIdx -> systemId, supaya auto-unhide tahu sistem mana. */
+  private readonly systemOf = new Map<number, string>()
 
   constructor(options: AtlasRendererOptions = {}) {
     this.dataUrl = options.dataUrl ?? '/data'
@@ -176,6 +180,16 @@ export class AtlasRenderer {
         for (const st of batch.header.structures) {
           state.init(st.idx, sysIdx)
           visibility.register(batch.header.systemId, st.idx)
+          this.systemOf.set(st.idx, batch.header.systemId)
+          const lo = new THREE.Vector3().fromArray(st.bbox[0])
+          const hi = new THREE.Vector3().fromArray(st.bbox[1])
+          this.structureBounds.set(
+            st.idx,
+            new THREE.Sphere(
+              lo.clone().add(hi).multiplyScalar(0.5),
+              Math.max(lo.distanceTo(hi) / 2, 1e-4),
+            ),
+          )
         }
         this.expandBounds(batch.header.structures)
         batches.add(batch)
@@ -436,6 +450,37 @@ export class AtlasRenderer {
     this.selection = []
     this.events.emit('selection', [])
     this.requestRender()
+  }
+
+  /**
+   * §E5 AC7: fly-to struktur (600 ms), pilih strukturnya, dan **otomatis
+   * tampilkan lagi kalau sistemnya sedang disembunyikan**.
+   *
+   * Tanpa auto-unhide, memilih hasil pencarian sambil memakai preset
+   * "Kerangka" akan menerbangkan kamera ke tempat kosong — pengalaman yang
+   * membingungkan dan persis yang dicegah AC7.
+   *
+   * @returns systemId yang baru ditampilkan, atau null kalau tidak perlu.
+   */
+  revealAndFlyTo(idx: number, additive = false): string | null {
+    const bounds = this.structureBounds.get(idx)
+    if (!bounds) return null
+
+    let revealed: string | null = null
+    const systemId = this.systemOf.get(idx)
+    if (systemId && this.visibility) {
+      const sys = this.visibility.snapshot().find((x) => x.id === systemId)
+      if (sys && (!sys.visible || sys.ghosted)) {
+        this.visibility.setSystem(systemId, { visible: true, opacity: 1, ghosted: false })
+        this.events.emit('systems', this.visibility.snapshot())
+        revealed = systemId
+      }
+    }
+
+    this.select(idx, additive)
+    this.camera?.flyTo(bounds.center, bounds.radius)
+    this.requestRender()
+    return revealed
   }
 
   // ------------------------------------------------------------ render loop

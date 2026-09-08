@@ -404,3 +404,66 @@ lebih dulu —
     a.batches.syncTransparentPass()
 
 Jangan simpulkan AC gagal sebelum memastikan `isAnimating === false`.
+
+## D-019 — Konsep COMPOUND ikut diterbitkan untuk pencarian
+
+**Tanggal:** 7 September 2026 · **Fase:** F3 (E5) · **Status:** diterapkan
+
+§E5 AC1 menargetkan index ~3.400 konsep, sedangkan mesh ELEMENT hanya 2.234.
+Selisihnya adalah konsep COMPOUND yang sebelumnya berhenti di
+`data_interim/structures_raw.json` dan tidak pernah sampai ke web.
+
+`04_pack_batches.py` sekarang menerbitkannya sebagai `groups` di
+`content/structures.json`. Index pencarian jadi **3.675 entri**.
+
+Ini bukan sekadar mengejar angka. Orang mencari "aorta" — yang di BP3D adalah
+COMPOUND dari 5 elemen, bukan satu mesh. Tanpa `groups`, query itu hanya
+menemukan "Abdominal aorta"/"Ascending aorta" dan tidak pernah konsep induknya.
+
+`structures.json` naik dari 0,49 MB ke 0,71 MB (Brotli 0,03 -> 0,05 MB).
+Total aset tetap 19,0 MB.
+
+## D-020 — Batas nyata BodyParts3D untuk user journey PRD
+
+**Tanggal:** 7 September 2026 · **Fase:** F3 · **Status:** ⚠️ temuan produk, perlu keputusan
+
+Saat menguji pencarian, ketahuan bahwa **dataset tidak memuat saraf perifer
+ekstremitas sama sekali**:
+
+- `sciatic` -> **0 struktur, 0 grup**
+- saraf bernama di seluruh dataset: **34**, dan semuanya kranial/orbital
+  (n. ethmoidalis, frontalis, oculomotorius, lacrimalis, nasociliaris,
+  ophthalmicus, ...)
+- tidak ada n. medianus, n. ulnaris, n. radialis, n. ischiadicus
+
+Ini menabrak user journey PRD sendiri:
+
+- **J1** mencontohkan "cari `nervus medianus`" — tidak akan pernah ketemu
+- **J4** membangun skenario PBL lesi n. medianus di carpal tunnel — tidak bisa
+  ditampilkan di 3D
+
+Bukan bug pencarian, dan bukan sesuatu yang bisa diperbaiki dengan kode.
+Ini batas dataset (§2.2 sudah memperingatkan mesh BP3D kasar di nervus kecil;
+kenyataannya lebih keras — nervusnya tidak ada, bukan cuma kasar).
+
+Pilihan (belum diputuskan, jatuh tempo sebelum F6):
+1. terima, dan ubah contoh di PRD ke struktur yang benar-benar ada
+2. cari sumber mesh tambahan untuk saraf perifer (mis. Z-Anatomy, D4) —
+   menambah masalah lisensi dan registrasi koordinat
+3. sediakan konten klinis untuk saraf tanpa geometri (teks saja, tanpa 3D)
+
+Rekomendasi: opsi 1 untuk v1. Kekuatan dataset ini ada di kardiovaskular
+(1.057 struktur), muskuloskeletal (646), dan viscera — arahkan fitur belajar
+ke sana, dan jangan menjanjikan neuroanatomi perifer.
+
+## D-021 — Bug index aktif tidak terjepit di daftar hasil
+
+**Tanggal:** 7 September 2026 · **Fase:** F3 · **Status:** diperbaiki
+
+Menyorot hasil ke-12 dengan mouse lalu mempersempit query sampai hasilnya
+tinggal 3 membuat `hits[active]` menjadi `undefined`. Enter lalu diam total —
+tanpa error, tanpa umpan balik. Dari sisi user terlihat seperti aplikasi hang.
+
+Diperbaiki dengan menjepit index aktif ke panjang hasil saat ini
+(`activeIndex`), bukan mengandalkan `setActive(0)` yang bisa didahului
+`onMouseEnter`.

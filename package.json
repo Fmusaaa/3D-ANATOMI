@@ -25,6 +25,7 @@
     "clsx": "^2.1.1",
     "cn": "^0.2.6",
     "lucide-react": "^1.41.0",
+    "minisearch": "^7.2.0",
     "radix-ui": "^1.6.7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

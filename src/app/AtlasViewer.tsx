@@ -11,10 +11,16 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { loadStructures, type StructureIndex, type StructureMeta } from '@/content/structures'
+import {
+  SYSTEM_LABEL,
+  loadStructures,
+  type StructureIndex,
+  type StructureMeta,
+} from '@/content/structures'
 import { DetailPanel } from '@/components/DetailPanel/DetailPanel'
 import { HoverTooltip } from '@/components/DetailPanel/HoverTooltip'
 import { DevOverlay } from '@/components/DevOverlay/DevOverlay'
+import { SearchBar } from '@/components/SearchBar/SearchBar'
 import { SystemTree } from '@/components/SystemTree/SystemTree'
 import { ViewToolbar } from '@/components/ViewToolbar/ViewToolbar'
 import { AtlasRenderer } from '@/viewer/AtlasRenderer'
@@ -41,6 +47,8 @@ export function AtlasViewer() {
   const [index, setIndex] = useState<StructureIndex | null>(null)
   const [hover, setHover] = useState<HoverInfo | null>(null)
   const [selection, setSelection] = useState<number[]>([])
+  /** Toast §E5 AC7: beri tahu kalau sebuah sistem otomatis ditampilkan lagi. */
+  const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -105,6 +113,23 @@ export function AtlasViewer() {
     setActivePreset(presetId)
   }
 
+  const hiddenSystems = new Set(systems.filter((x) => !x.visible).map((x) => x.id))
+  const isHidden = (idx: number): boolean => {
+    const m = index?.byIdx.get(idx)
+    return m ? hiddenSystems.has(m.system) : false
+  }
+
+  const handleSearchPick = (idx: number): void => {
+    const revealed = rendererRef.current?.revealAndFlyTo(idx) ?? null
+    if (revealed) {
+      const label = SYSTEM_LABEL[revealed]
+      setToast(`${label?.la ?? revealed} ditampilkan`)
+      setTimeout(() => {
+        setToast(null)
+      }, 3200)
+    }
+  }
+
   const hovered = hover && index ? (index.byIdx.get(hover.idx) ?? null) : null
   const selected: StructureMeta[] = index
     ? selection.flatMap((i) => {
@@ -133,6 +158,19 @@ export function AtlasViewer() {
             setShowOverlay(false)
           }}
         />
+      )}
+
+      {ready && index && (
+        <SearchBar index={index} isHidden={isHidden} onPick={handleSearchPick} />
+      )}
+
+      {toast && (
+        <div
+          role="status"
+          className="pointer-events-none absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-lg border border-white/15 bg-black/85 px-3.5 py-2 text-[12px] text-white/85 backdrop-blur"
+        >
+          {toast}
+        </div>
       )}
 
       {ready && (

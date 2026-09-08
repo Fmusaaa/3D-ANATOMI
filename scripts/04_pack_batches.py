@@ -351,10 +351,27 @@ def main() -> int:
 
     # ---- structures.json (§6.4) -------------------------------------------
     qmap = {s["fileId"]: meshes[s["fileId"]]["quality"] for s in structures}
+
+    # Konsep COMPOUND ikut diterbitkan supaya bisa dicari (§E5 AC1 menargetkan
+    # ~3.400 konsep, sedangkan mesh ELEMENT hanya 2.234). Orang mencari "aorta",
+    # yang di BP3D adalah COMPOUND dari 5 elemen — bukan satu mesh.
+    by_file = {s["fileId"]: s["idx"] for s in structures}
+    groups_out = []
+    for g in doc.get("groups", []):
+        members = [by_file[f] for f in g["elements"] if f in by_file]
+        if not members:
+            continue
+        groups_out.append({
+            "fma": g["fma"],
+            "name": {"en": g["name_en"]},
+            "members": members,
+        })
     content = {
         "schema": 1,
         "note": (
-            "parent = induk part-of kalau ada, kalau tidak induk is-a. "
+            "structures = mesh ELEMENT (satu structureIdx masing-masing). "
+            "groups = konsep FMA COMPOUND yang menunjuk >1 elemen; tidak punya "
+            "geometri sendiri, dipakai untuk search & tree. "
             "parentPartof/parentIsa disediakan terpisah karena keduanya punya arti "
             "berbeda: part-of = topografi, is-a = tipe. highYield masih false untuk "
             "semua (D-010: daftar high-yield belum dikurasi)."
@@ -375,6 +392,7 @@ def main() -> int:
             }
             for s in structures
         ],
+        "groups": groups_out,
     }
     (OUT_CONTENT / "structures.json").write_text(
         json.dumps(content, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"

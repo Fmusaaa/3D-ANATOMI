@@ -5,9 +5,9 @@ BodyParts3D (~2.200+ mesh, 15 sistem organ). Target user: **mahasiswa kedokteran
 Indonesia** — bukan viewer umum. Baca `PRD.md` untuk spesifikasi lengkap; file
 ini cuma aturan main yang wajib diingat tiap sesi.
 
-**Status saat ini: Fase 2 (seleksi & visibilitas).** Pipeline data selesai;
-renderer menampilkan model lengkap dengan orbit, preset view, kontrol
-visibilitas per sistem, GPU picking, dan panel detail.
+**Status saat ini: Fase 3 (pencarian).** Pipeline data selesai; renderer
+menampilkan model lengkap dengan orbit, preset view, kontrol visibilitas per
+sistem, GPU picking, panel detail, dan pencarian 3.675 konsep.
 
 ---
 
@@ -115,6 +115,12 @@ Mesh BodyParts3D itu hasil segmentasi dataset 2011 — kasar di struktur halus
 (nervus kecil, pembuluh distal, otot tangan/wajah). Ini batas dataset, bukan bug
 yang bisa di-fix. Tandai `meshQuality` rendah di UI; jangan janjikan presisi yang
 gak ada.
+
+⚠️ **Saraf perifer ekstremitas TIDAK ADA di dataset** — bukan cuma kasar. Nol
+hasil untuk `sciatic`; hanya 34 saraf bernama, semuanya kranial/orbital. User
+journey J1 & J4 di PRD memakai n. medianus sebagai contoh dan **tidak bisa
+diwujudkan**. Lihat D-020. Kekuatan dataset ada di kardiovaskular (1.057),
+muskuloskeletal (646), dan viscera.
 
 ## Kalau PRD dan kenyataan bentrok
 

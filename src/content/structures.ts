@@ -21,14 +21,27 @@ export interface StructureMeta {
   meshQuality: number
 }
 
+/**
+ * Konsep FMA COMPOUND: tidak punya geometri sendiri, hanya menunjuk beberapa
+ * mesh ELEMENT. Ada 1.441 dan justru ini yang biasa dicari orang ("aorta").
+ */
+export interface GroupMeta {
+  fma: string
+  name: { en: string }
+  members: number[]
+}
+
 export interface StructureIndex {
   byIdx: Map<number, StructureMeta>
+  all: StructureMeta[]
+  groups: GroupMeta[]
   /** §E10 AC13: di bawah ambang ini mesh dianggap terlalu rusak untuk quiz klik. */
   meshQualityExcludeBelow: number
 }
 
 interface RawDoc {
   structures: StructureMeta[]
+  groups?: GroupMeta[]
   meshQualityExcludeBelow: number
 }
 
@@ -38,7 +51,12 @@ export async function loadStructures(baseUrl = '/data'): Promise<StructureIndex>
   const doc = (await res.json()) as RawDoc
   const byIdx = new Map<number, StructureMeta>()
   for (const s of doc.structures) byIdx.set(s.idx, s)
-  return { byIdx, meshQualityExcludeBelow: doc.meshQualityExcludeBelow }
+  return {
+    byIdx,
+    all: doc.structures,
+    groups: doc.groups ?? [],
+    meshQualityExcludeBelow: doc.meshQualityExcludeBelow,
+  }
 }
 
 export const SYSTEM_LABEL: Record<string, { la: string; id: string }> = {
