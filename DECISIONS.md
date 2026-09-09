@@ -989,3 +989,71 @@ justru menegakkan §E10 AC14. Sudah diperbaiki dan semua kasus kembali hijau.
 
 Pelajarannya: `npm run validate` lulus bukan berarti validatornya teruji.
 Menjalankan alatnya dan menguji alatnya adalah dua hal berbeda.
+
+## D-043 — Catatan & bookmark: kunci FMA, bukan idx; deep link, bukan format baru
+
+**Tanggal:** 9 September 2026 · **Fase:** F9 · **Status:** diterapkan
+
+§E15 juga tanpa AC rinci di PRD. Dua keputusan bentuk yang menentukan sisanya:
+
+**1. Catatan dikunci ke FMA ID, bukan `structureIdx`.** `idx` ditentukan urutan
+packing pipeline. Membangun ulang data bisa menggesernya, dan catatan mahasiswa
+akan diam-diam menempel ke organ yang berbeda — persis jenis kesalahan yang
+tidak pernah kelihatan sampai terlambat. FMA ID stabil lintas rilis dataset.
+
+**2. Bookmark menyimpan deep link §E14, bukan snapshot state sendiri.** Encoder
+itu sudah mencakup kamera, visibilitas, opacity, seleksi, preset, dan bidang
+potong. Format kedua berarti dua sumber kebenaran yang harus diperbarui tiap
+kali ada state tampilan baru, dan yang satu pasti ketinggalan. Konsekuensinya
+menyenangkan: bidang potong E13 ikut tersimpan di bookmark tanpa satu baris
+kode tambahan.
+
+Sisi buruknya jujur dicatat: deep link menyimpan seleksi sebagai `idx`. Karena
+itu tiap bookmark membawa sidik jari dataset (`<struktur>-<segitiga>`), dan
+bookmark dari dataset lain diberi peringatan — "sudut kamera tetap benar, tapi
+struktur yang tersorot mungkin bergeser". Tidak sempurna (dataset berbeda
+dengan jumlah kebetulan sama lolos), tapi jauh lebih baik daripada diam.
+
+### Editor catatan: `key`, bukan `useEffect`
+
+Menyinkronkan draft dari store lewat `useEffect` **salah**, dan salahnya halus:
+store berganti identitas setiap kali autosave menulis, jadi efeknya berjalan
+lagi dan menimpa teks yang sedang diketik dengan versi yang baru saja disimpan.
+Editor di-`key` per FMA supaya berpindah struktur me-remount komponen dan draft
+diambil dari inisialisasi `useState`.
+
+Penulisan saat unmount hanya terjadi kalau isinya BERUBAH. Menulis ulang isi
+yang sama akan memajukan `updatedAt` tanpa ada suntingan — dan aturan
+penggabungan impor ("yang terbaru menang") lalu membuat catatan lokal yang cuma
+pernah DIBUKA mengalahkan versi yang sungguh-sungguh lebih baru.
+
+### Impor tidak boleh mempercayai berkasnya
+
+Isi berkas datang dari pilihan user dan bisa saja bukan cadangan Corpus.
+`parseBackup` **tidak pernah melempar** — kalau ia melempar, tombol impor akan
+menjatuhkan seluruh app hanya karena seseorang memilih berkas yang salah.
+Entri yang bentuknya tidak sah dibuang dan DIHITUNG, bukan diimpor separuh:
+catatan ber-FMA ngawur akan menempel ke struktur yang tidak ada dan tidak akan
+pernah terlihat lagi oleh pemiliknya. Versi cadangan tak dikenal ditolak, bukan
+ditebak isinya.
+
+Diuji dengan berkas asing, berkas rusak, JSON bukan-objek, entri tanpa id/hash,
+hash raksasa, dan field waktu ngawur — semuanya menghasilkan pesan, bukan
+lemparan.
+
+### Batas yang dinyatakan terbuka
+
+Semua tersimpan **per-perangkat, per-browser** (§4.2 melarang backend di v1).
+Itu bertentangan langsung dengan tujuan "bisa diakses dari mana saja", jadi
+kalimatnya ada di UI — di editor catatan DAN di panel bookmark — bukan cuma di
+komentar. Ekspor/impor JSON adalah jembatan manualnya; impor menggabungkan dan
+tidak menimpa catatan yang lebih baru.
+
+"Hapus semua" butuh dua klik. Aksi ini menghapus seluruh catatan mahasiswa dan
+tidak bisa dibatalkan; satu klik tak sengaja di sebelah "Impor" sudah cukup
+untuk menghabisi kerja berminggu-minggu.
+
+`IndexedDB` bisa tidak tersedia (mode privat, kebijakan browser). Semua fungsi
+`lib/db.ts` mengembalikan nilai kosong alih-alih melempar, dan UI mengatakannya
+— fitur catatan yang diam-diam tidak menyimpan apa pun jauh lebih buruk
+daripada fitur yang mengaku tidak bisa menyimpan.

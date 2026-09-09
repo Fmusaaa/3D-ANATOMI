@@ -32,6 +32,7 @@ import { Drawer } from '@/components/Mobile/Drawer'
 import { detectCapability, useIsMobile, type DeviceCapability } from '@/lib/device'
 import { AboutPanel, ATTRIBUTION_SHORT } from '@/components/About/AboutPanel'
 import { OfflinePanel } from '@/components/Offline/OfflinePanel'
+import { BookmarkPanel } from '@/components/Bookmarks/BookmarkPanel'
 import { useOffline } from '@/lib/offline'
 import { ThemeToggle } from '@/components/ThemeToggle/ThemeToggle'
 import { CANVAS_BG, useTheme } from '@/lib/theme'
@@ -76,6 +77,7 @@ export function AtlasViewer() {
   const [showContrib, setShowContrib] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [showOffline, setShowOffline] = useState(false)
+  const [showBookmarks, setShowBookmarks] = useState(false)
   const offline = useOffline()
   const [modelStats, setModelStats] = useState<{ structures: number; triangles: number } | null>(null)
   const [explode, setExplode] = useState(0)
@@ -90,6 +92,48 @@ export function AtlasViewer() {
   const [capabilityDismissed, setCapabilityDismissed] = useState(false)
   /** Hash awal dibaca SEKALI, sebelum apa pun sempat menimpanya. */
   const initialHash = useRef(typeof window === 'undefined' ? '' : window.location.hash)
+
+  /**
+   * Pulihkan tampilan dari sebuah deep link (§E14 AC3, dipakai ulang oleh §E15).
+   *
+   * Dipakai dua kali: saat hash awal dibuka, dan saat sebuah bookmark diklik.
+   * Bookmark memang menyimpan deep link, jadi membuka bookmark harus menempuh
+   * jalur pemulihan yang SAMA — kalau tidak, akan ada dua definisi "membuka
+   * tampilan tersimpan" yang lambat laun berbeda.
+   */
+  const applyDeepLinkTo = useCallback((renderer: AtlasRenderer, hash: string): void => {
+    const restored = decodeState(hash, SYSTEM_ORDER)
+    if (!restored) return
+
+    renderer.restore(restored)
+
+    // Sorot preset HANYA kalau himpunan sistem yang dipulihkan memang cocok
+    // dengan definisinya. Tanpa cek ini, tautan bisa menyorot "Semua"
+    // sementara yang tampil cuma organ dalam — tombolnya berbohong soal apa
+    // yang sedang dilihat.
+    const preset = VISIBILITY_PRESETS.find((x) => x.id === restored.presetId)
+    const shown = new Set(restored.visibleSystems)
+    const expected = new Set([...(preset?.show ?? []), ...(preset?.ghost ?? [])])
+    const cocok =
+      preset !== undefined &&
+      shown.size === expected.size &&
+      [...shown].every((id) => expected.has(id))
+
+    setActivePreset(cocok ? restored.presetId : null)
+    setClip(restored.clip)
+    setClipOffsetMm(renderer.clipOffsetMm())
+  }, [])
+
+  /** Buka bookmark (§E15). */
+  const handleOpenBookmark = useCallback(
+    (hash: string): void => {
+      const r = rendererRef.current
+      if (!r) return
+      applyDeepLinkTo(r, hash)
+      window.history.replaceState(null, '', `#${hash}`)
+    },
+    [applyDeepLinkTo],
+  )
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -107,24 +151,7 @@ export function AtlasViewer() {
         setModelStats(info)
         // §E14 AC3: pulihkan state SETELAH geometri siap — sebelum itu
         // structureCount masih 0 dan seleksi akan ditolak diam-diam.
-        const restored = decodeState(initialHash.current, SYSTEM_ORDER)
-        if (restored) {
-          renderer.restore(restored)
-          // Sorot preset HANYA kalau himpunan sistem yang dipulihkan memang
-          // cocok dengan definisinya. Tanpa cek ini, tautan bisa menyorot
-          // "Semua" sementara yang tampil cuma organ dalam — tombolnya
-          // berbohong soal apa yang sedang dilihat.
-          const preset = VISIBILITY_PRESETS.find((x) => x.id === restored.presetId)
-          const shown = new Set(restored.visibleSystems)
-          const expected = new Set([...preset?.show ?? [], ...preset?.ghost ?? []])
-          const cocok =
-            preset !== undefined &&
-            shown.size === expected.size &&
-            [...shown].every((id) => expected.has(id))
-          setActivePreset(cocok ? restored.presetId : null)
-          setClip(restored.clip)
-          setClipOffsetMm(renderer.clipOffsetMm())
-        }
+        applyDeepLinkTo(renderer, initialHash.current)
       }),
       renderer.events.on('systems', setSystems),
       renderer.events.on('hover', setHover),
@@ -167,7 +194,9 @@ export function AtlasViewer() {
       renderer.dispose()
       rendererRef.current = null
     }
-  }, [])
+    // `applyDeepLinkTo` adalah useCallback berdeps kosong — stabil, jadi
+    // menambahkannya di sini tidak membuat viewer di-mount ulang.
+  }, [applyDeepLinkTo])
 
   // Latar kanvas 3D ikut tema; tanpa ini kanvas tetap gelap di mode terang.
   useEffect(() => {
@@ -490,6 +519,17 @@ export function AtlasViewer() {
           <button
             type="button"
             onClick={() => {
+              setShowBookmarks(true)
+            }}
+            title="Tampilan tersimpan & catatan (§E15)"
+            aria-label="Tampilan tersimpan"
+            className="pointer-events-auto rounded-lg border border-panel-border bg-panel px-3 py-2 text-[12px] text-panel-muted backdrop-blur hover:text-panel-fg"
+          >
+            <span aria-hidden="true">☰</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
               setShowAbout(true)
             }}
             className="pointer-events-auto rounded-lg border border-panel-border bg-panel px-3 py-2 text-[12px] text-panel-muted backdrop-blur hover:text-panel-fg"
@@ -537,6 +577,19 @@ export function AtlasViewer() {
       )}
 
       {ready && <ViewToolbar onPreset={handlePreset} onReset={handleReset} />}
+
+      {showBookmarks && (
+        <BookmarkPanel
+          currentHash={() => writeHash().split('#')[1] ?? ''}
+          dataFingerprint={
+            modelStats ? `${String(modelStats.structures)}-${String(modelStats.triangles)}` : ''
+          }
+          onOpen={handleOpenBookmark}
+          onClose={() => {
+            setShowBookmarks(false)
+          }}
+        />
+      )}
 
       {showOffline && (
         <OfflinePanel

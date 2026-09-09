@@ -20,14 +20,17 @@ import {
 } from '@/content/structures'
 import { displayName, type LanguageCode, type Nomenclature } from '@/content/nomenclature'
 import { NameBlock } from '@/components/Nomenclature/NameBlock'
+import { NoteEditor } from '@/components/DetailPanel/NoteEditor'
+import { useStudyData } from '@/study/annotations'
 import { cn } from '@/lib/utils'
 
-type Tab = 'ikhtisar' | 'relasi' | 'klinis'
+type Tab = 'ikhtisar' | 'relasi' | 'klinis' | 'catatan'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'ikhtisar', label: 'Ikhtisar' },
   { id: 'relasi', label: 'Relasi' },
   { id: 'klinis', label: 'Klinis' },
+  { id: 'catatan', label: 'Catatan' },
 ]
 
 interface Props {
@@ -64,6 +67,9 @@ export function DetailPanel({
   variant = 'floating',
 }: Props) {
   const [tab, setTab] = useState<Tab>('ikhtisar')
+  // Dibaca di sini hanya untuk menandai tab yang sudah berisi catatan (§E15):
+  // tanpa penanda, satu-satunya cara tahu ada catatan adalah membuka tabnya.
+  const { notes } = useStudyData()
   if (selected.length === 0) return null
 
   const s = selected[selected.length - 1]
@@ -156,6 +162,14 @@ export function DetailPanel({
             )}
           >
             {t.label}
+            {/* §E11 AC8: titik ini BUKAN satu-satunya penanda — jumlahnya juga
+                dibacakan pembaca layar lewat aria-label di bawah. */}
+            {t.id === 'catatan' && notes.has(s.fma) && (
+              <span
+                aria-label="struktur ini punya catatan"
+                className="ml-1 inline-block size-1.5 rounded-full bg-panel-ok align-middle"
+              />
+            )}
           </button>
         ))}
       </div>
@@ -204,6 +218,13 @@ export function DetailPanel({
               </span>
             </Field>
           </div>
+        )}
+
+        {tab === 'catatan' && (
+          <NoteEditor
+            fma={s.fma}
+            label={displayName(nomenclature, s.fma, s.name.en, language).text || s.name.en}
+          />
         )}
 
         {tab === 'ikhtisar' && lowQuality && (

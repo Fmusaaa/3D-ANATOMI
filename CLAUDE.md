@@ -7,7 +7,8 @@ ini cuma aturan main yang wajib diingat tiap sesi.
 
 **Status saat ini: Fase 9 berjalan.** Pipeline data, renderer, seleksi,
 visibilitas, pencarian, deep link, nomenklatur, exploded view, tema
-terang/gelap, PWA offline, dan potongan anatomis sudah jalan.
+terang/gelap, PWA offline, potongan anatomis, serta catatan & bookmark
+sudah jalan.
 **0 entri nomenklatur terverifikasi** — §E7 AC6 menunggu review manusia.
 Deploy publik pertama masih tertahan konflik lisensi BodyParts3D (D-005).
 
@@ -74,6 +75,9 @@ Butuh venv sendiri: `pip install -r scripts/requirements.txt`.
 | `shaders/atlasChunks.ts` | Potongan GLSL. `octDecode` WAJIB pakai `signNotZero` |
 | `types.ts`, `events.ts` | **Satu-satunya** yang boleh diimpor `src/components/**` |
 
+Penyimpanan lokal: `src/lib/db.ts` (pembungkus IndexedDB, tidak pernah melempar)
+dan `src/study/annotations.ts` (catatan per FMA + bookmark berisi deep link).
+
 `src/sw/service-worker.js` bukan modul bundle: di-emit apa adanya oleh plugin
 `corpus-service-worker` di `vite.config.ts`, yang mengisi `__SHELL__`,
 `__DATA_SHELL__`, `__BUILD__`, dan `__DATA_VERSION__` saat build.
@@ -106,6 +110,12 @@ viewer di luar `types.ts`/`events.ts`.
   pass picking terlewat, klik memilih struktur yang sudah terpotong (D-041).
   `side` juga bukan bagian dari versi material — ganti `side` wajib disertai
   `needsUpdate = true`, kalau tidak define `DOUBLE_SIDED` tidak ikut berubah.
+- **Catatan user dikunci ke FMA ID, JANGAN ke `structureIdx`.** `idx` bisa
+  bergeser kalau pipeline dibangun ulang, dan catatan akan diam-diam menempel
+  ke organ lain (D-043).
+- **Jangan sinkronkan draft editor lewat `useEffect` dari store.** Store
+  berganti identitas tiap autosave, jadi efeknya menimpa teks yang sedang
+  diketik. Pakai `key` per entitas supaya komponennya remount (D-043).
 - **Sisi KANAN pasien ada di X negatif.** Tubuh nyaris simetris, jadi menukar
   konvensi ini menghasilkan gambar yang terlihat benar dan berlabel salah.
   Dikunci di `tests/data/test_laterality_axis.py`, bukan cuma di unit test TS
