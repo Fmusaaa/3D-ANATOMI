@@ -31,7 +31,7 @@ export function ExplodeControl({
   const active = value > 0
 
   return (
-    <div className="pointer-events-auto absolute bottom-20 left-1/2 z-20 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border border-panel-border bg-panel px-3 py-2.5 backdrop-blur">
+    <div className="pointer-events-auto w-full rounded-xl border border-panel-border bg-panel px-3 py-2.5 backdrop-blur">
       <div className="flex items-center gap-3">
         <button
           type="button"

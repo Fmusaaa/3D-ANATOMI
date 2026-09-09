@@ -145,6 +145,8 @@ export const FRAGMENT_COLOR = /* glsl */ `
  * seluruh scene. `BatchManager` menukar material per mesh selama pass picking.
  */
 export const PICKING_VERTEX = /* glsl */ `
+#include <clipping_planes_pars_vertex>
+
 attribute vec2 aOctNormal;
 attribute float aStructureIdx;
 
@@ -181,14 +183,26 @@ void main() {
     p = vec3(1e10);
   }
 
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  // §E13: bidang potong WAJIB dipakai di pass picking juga. Kalau tidak,
+  // klik pada permukaan potongan akan memilih struktur yang sudah terpotong
+  // dan tidak terlihat — user memilih sesuatu yang tidak ada di layar.
+  //
+  // Chunk clipping_planes_vertex membaca variabel bernama 'mvPosition',
+  // jadi namanya tidak boleh diubah.
+  vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
+  gl_Position = projectionMatrix * mvPosition;
+  #include <clipping_planes_vertex>
 }
 `
 
 export const PICKING_FRAGMENT = /* glsl */ `
+#include <clipping_planes_pars_fragment>
+
 varying float vIdx;
 
 void main() {
+  #include <clipping_planes_fragment>
+
   float idx = floor(vIdx + 0.5);
   gl_FragColor = vec4(
     mod(idx, 256.0) / 255.0,

@@ -5,9 +5,11 @@ BodyParts3D (~2.200+ mesh, 15 sistem organ). Target user: **mahasiswa kedokteran
 Indonesia** — bukan viewer umum. Baca `PRD.md` untuk spesifikasi lengkap; file
 ini cuma aturan main yang wajib diingat tiap sesi.
 
-**Status saat ini: Fase 4 & 5 selesai (engineering).** Pipeline data, renderer, seleksi, visibilitas, pencarian, deep link,
-dan layer nomenklatur Latin/Indonesia sudah jalan. **0 entri terverifikasi** —
-§E7 AC6 menunggu review manusia.
+**Status saat ini: Fase 9 berjalan.** Pipeline data, renderer, seleksi,
+visibilitas, pencarian, deep link, nomenklatur, exploded view, tema
+terang/gelap, PWA offline, dan potongan anatomis sudah jalan.
+**0 entri nomenklatur terverifikasi** — §E7 AC6 menunggu review manusia.
+Deploy publik pertama masih tertahan konflik lisensi BodyParts3D (D-005).
 
 ---
 
@@ -66,6 +68,7 @@ Butuh venv sendiri: `pip install -r scripts/requirements.txt`.
 | `CameraController.ts` | OrbitControls, preset, fly-to sferis, batas zoom |
 | `PickingPass.ts` | GPU picking 1x1. `readRenderTargetPixels` = stall sinkron |
 | `ExplodeLayout.ts` | Layout explode. **Murni angka, tanpa three.js** — itu yang bikin non-overlap bisa dibuktikan di unit test |
+| `ClipPlane.ts` | Bidang potong anatomis. **Murni angka** — konvensi kiri/kanan wajib bisa diuji, bukan dilihat |
 | `VisibilityController.ts` | Visibilitas/opacity per sistem + fade 180 ms |
 | `loaders/AtlasLoader.ts` | Parse `.atlas`, tolak file rusak dengan pesan jelas |
 | `shaders/atlasChunks.ts` | Potongan GLSL. `octDecode` WAJIB pakai `signNotZero` |
@@ -98,6 +101,15 @@ viewer di luar `types.ts`/`events.ts`.
   Fade visibilitas menggantung dan tinggi elemen membeku di nilai sebelum
   transisi — AC terlihat gagal padahal tidak. Sebelum menyimpulkan ada bug,
   jalankan `el.getAnimations().forEach(a => a.finish())`. Lihat D-018 & D-034.
+- **`ShaderMaterial` tidak ikut clipping tanpa `clipping: true`** + chunk
+  `clipping_planes_*` di GLSL-nya. Material bawaan three ikut otomatis. Kalau
+  pass picking terlewat, klik memilih struktur yang sudah terpotong (D-041).
+  `side` juga bukan bagian dari versi material — ganti `side` wajib disertai
+  `needsUpdate = true`, kalau tidak define `DOUBLE_SIDED` tidak ikut berubah.
+- **Sisi KANAN pasien ada di X negatif.** Tubuh nyaris simetris, jadi menukar
+  konvensi ini menghasilkan gambar yang terlihat benar dan berlabel salah.
+  Dikunci di `tests/data/test_laterality_axis.py`, bukan cuma di unit test TS
+  (D-042).
 - **Fitur offline HANYA terbukti dengan mematikan server sungguhan.** Tiga bug
   service worker lolos dari seluruh pengujian online: `Vary: Origin` bikin
   `cache.match` meleset (halaman putih, tanpa exception), precache masuk cache

@@ -896,3 +896,96 @@ benar:
 
 ⚠️ Deploy publik pertama masih tertahan D-005 (konflik lisensi BodyParts3D).
 Konfigurasinya siap; keputusannya bukan keputusan teknis.
+
+## D-041 — Potongan anatomis lewat clipping plane, bukan geometri baru
+
+**Tanggal:** 9 September 2026 · **Fase:** F9 · **Status:** diterapkan
+
+§E13 tidak punya AC rinci di PRD (cuma satu baris di tabel epik), jadi
+kontraknya ditetapkan di sini.
+
+**Tiga bidang baku anatomi, bukan sumbu XYZ.** Mahasiswa membaca potongan dalam
+istilah sagital/koronal/transversal, dan CT/MRI memakai istilah yang sama.
+Menyebutnya "sumbu X" memaksa penerjemahan di kepala tiap kali.
+
+**Posisi ditampilkan dalam milimeter dari titik tengah tubuh**, bukan persen.
+Persen tidak berarti apa-apa secara anatomi. Angkanya keluar benar sebagai efek
+samping yang menyenangkan: setengah-lebar tubuh 334 mm, setengah-dalam 146 mm,
+setengah-tinggi 865 mm — tinggi total 1,73 m, sosok dewasa yang wajar.
+
+**Geometri tidak disentuh** (§5.2): pemotongan terjadi di fragment shader lewat
+`renderer.clippingPlanes`. Idle tetap 0 render setelah fitur ini masuk —
+diverifikasi, bukan diasumsikan.
+
+### Dua hal yang wajib ikut, dan gampang terlupa
+
+**1. Pass picking harus memakai bidang yang sama.** Material bawaan three
+mendukung clipping otomatis; `ShaderMaterial` TIDAK — ia butuh `clipping: true`
+plus chunk `clipping_planes_*` di GLSL-nya. Tanpa itu, mengklik permukaan
+potongan akan memilih struktur yang sudah terpotong dan tidak terlihat: user
+memilih sesuatu yang tidak ada di layar.
+
+Dibuktikan dengan menyapu 10 titik klik yang sama sebelum dan sesudah memotong:
+
+| x (px) | tanpa potongan | potongan sagital, sisi sinistra |
+|---|---|---|
+| 612 | Dextra (FMA8531) | tidak ada |
+| 624 | Dextra (FMA8533) | tidak ada |
+| 636 | Mediana (FMA13072) | tidak ada |
+| 660 | Sinistra (FMA8534) | Sinistra (FMA8534) |
+| 684 | Sinistra (FMA8472) | Sinistra (FMA8472) |
+
+Nol struktur dextra bisa dipilih setelah dipotong; sisi yang bertahan memilih
+persis struktur yang sama seperti sebelumnya. Setelah "Balik", hasilnya cermin
+sempurna dari tabel di atas.
+
+**2. `DoubleSide` selama memotong.** §5.3.4 memakai `FrontSide` demi hemat, tapi
+mesh BodyParts3D adalah cangkang permukaan, bukan benda pejal. Dengan
+`FrontSide`, bidang potong membuat organ tampak seperti lubang tembus — yang
+terlihat justru latar di belakangnya. `side` bukan bagian dari versi material,
+jadi three tidak otomatis mengompilasi ulang: `needsUpdate` wajib di-set sendiri.
+
+### Batas yang dinyatakan terbuka di UI
+
+Tidak ada tutup (cap) di permukaan potong, dan tidak akan ada selama datanya
+cangkang permukaan. Yang terlihat adalah dinding dalam cangkang, bukan irisan
+jaringan seperti CT. Ini ditulis di panelnya sendiri — menjanjikan "irisan
+seperti CT" adalah janji yang tidak bisa ditepati dataset ini.
+
+### Deep link
+
+Field `k=<sumbu>_<posisi×1000>_<flip>` ditambahkan ke §E14. Versi format TETAP 1:
+aturannya menaikkan versi kalau field berubah ARTI, dan menambah field opsional
+tidak mengubah arti apa pun — tautan lama tanpa `k` tetap terbaca benar. Sumbu
+yang tidak dikenal membuat bidang potongnya dibuang, bukan ditebak.
+
+## D-042 — Sumbu lateral dikunci di level data, dan satu suite test ternyata mati
+
+**Tanggal:** 9 September 2026 · **Fase:** F9 · **Status:** diperbaiki
+
+`keptSide()` memetakan setengah-ruang +X ke "sinistra". Unit test TypeScript
+hanya membuktikan pemetaan itu konsisten dengan dirinya sendiri — kalau konvensi
+datanya ternyata kebalikan, seluruh rantainya tetap "lulus" sambil melabeli sisi
+kiri pasien sebagai dextra.
+
+Tubuh manusia nyaris simetris kiri-kanan, jadi kesalahan ini **tidak akan
+terlihat di layar.** Karena itu `tests/data/test_laterality_axis.py` membandingkan
+label lateralitas di ontologi dengan letak geometri sebenarnya di file `.atlas`:
+
+    dextra   : 829/882 (94,0%) ada di X negatif
+    sinistra : 842/862 (97,7%) ada di X positif
+    median   : 152/152 dalam ±50 mm dari X=0
+
+Sisa persennya adalah organ yang bbox-nya menyeberang mediana — wajar, ambangnya
+90%. Struktur median yang semuanya rapat di X=0 sekaligus membuktikan model
+ter-center, yang jadi syarat "0 mm" di slider berarti garis tengah sungguhan.
+
+**Temuan sampingan:** `tests/data/test_validator.py` **crash di baris pertama**
+sejak commit `3ba111f` (Fase 5) — `validate_quiz()` mendapat parameter `nomen`
+baru dan pemanggilan di test tidak ikut diperbarui. Karena crash-nya di baseline,
+SELURUH 11 kasus rusak di file itu tidak pernah dijalankan selama beberapa fase,
+termasuk kasus "soal quiz menunjuk struktur tanpa nomenklatur `reviewed`" yang
+justru menegakkan §E10 AC14. Sudah diperbaiki dan semua kasus kembali hijau.
+
+Pelajarannya: `npm run validate` lulus bukan berarti validatornya teruji.
+Menjalankan alatnya dan menguji alatnya adalah dua hal berbeda.

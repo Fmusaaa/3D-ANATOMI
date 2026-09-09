@@ -114,6 +114,7 @@ export class BatchManager {
   private readonly stateTex: StateTexture
   private readonly xformTex: XformTexture
   private transparentPassEnabled = false
+  private clippingOn = false
 
   constructor(stateTex: StateTexture, xformTex: XformTexture) {
     this.stateTex = stateTex
@@ -230,7 +231,40 @@ export class BatchManager {
         uMinPickOpacity: { value: MIN_PICK_OPACITY },
       },
       side: THREE.FrontSide,
+      // ⚠️ Material bawaan three mendukung clipping otomatis; ShaderMaterial
+      // TIDAK. Tanpa flag ini uniform `clippingPlanes` tidak pernah dikirim,
+      // dan pass picking akan memilih struktur yang sudah terpotong (§E13).
+      clipping: true,
     })
+  }
+
+  /**
+   * Nyalakan/matikan mode potongan (§E13).
+   *
+   * Saat memotong, sisi material dinaikkan ke `DoubleSide`. §5.3.4 sengaja
+   * memakai `FrontSide` demi hemat — tapi mesh BodyParts3D adalah cangkang
+   * permukaan, bukan benda pejal. Dengan `FrontSide`, bidang potong membuat
+   * organ tampak seperti lubang tembus: yang terlihat justru latar di
+   * belakangnya. `DoubleSide` menampilkan dinding dalam cangkangnya.
+   *
+   * Pass picking ikut `DoubleSide` supaya yang bisa diklik persis yang
+   * terlihat.
+   *
+   * Mengembalikan true kalau statusnya berubah (perlu render ulang).
+   */
+  setClipping(on: boolean): boolean {
+    if (on === this.clippingOn) return false
+    this.clippingOn = on
+    const side = on ? THREE.DoubleSide : THREE.FrontSide
+    for (const e of this.entries) {
+      for (const m of [e.opaqueMaterial, e.transparentMaterial, e.picking]) {
+        m.side = side
+        // `side` bukan bagian dari versi material, jadi three tidak otomatis
+        // mengompilasi ulang; define DOUBLE_SIDED tidak akan ikut berubah.
+        m.needsUpdate = true
+      }
+    }
+    return true
   }
 
   /**

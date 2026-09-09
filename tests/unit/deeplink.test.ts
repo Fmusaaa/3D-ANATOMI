@@ -32,6 +32,7 @@ const base: DeepLinkState = {
   opacities: {},
   selection: [],
   presetId: null,
+  clip: null,
 }
 
 /** Kuantisasi 1 mm: bandingkan dengan toleransi, bukan kesamaan persis. */
@@ -111,6 +112,8 @@ describe('§E14 AC2 — panjang URL < 500 karakter', () => {
       opacities: Object.fromEntries(SYSTEMS.map((s, i) => [s, (i + 1) / 20])),
       selection: [2233, 2232, 2231, 2230, 2229, 2228, 2227, 2226], // maks 8 (§E3 AC8)
       presetId: 'kardiovaskular',
+      // §E13 ikut dihitung: bidang potong menambah panjang URL juga.
+      clip: { axis: 'transverse', position: -0.987, flipped: true },
     }
     const encoded = encodeState(worst, SYSTEMS)
     expect(encoded.length).toBeLessThan(500)
@@ -147,5 +150,33 @@ describe('penolakan input tidak sah', () => {
   it('opacity ditulis base36, dan encoder/decoder sepakat', () => {
     const s: DeepLinkState = { ...base, opacities: { systema_articulare: 0.3 } }
     expect(encodeState(s, SYSTEMS)).toContain('o=1-u')
+  })
+})
+
+describe('§E13 — bidang potong ikut di deep link', () => {
+  it('tautan tanpa `k` tidak memotong (tautan lama tetap sah)', () => {
+    const encoded = encodeState(base, SYSTEMS)
+    expect(encoded).not.toContain('k=')
+    expect(decodeState(encoded, SYSTEMS)?.clip).toBeNull()
+  })
+
+  it.each([
+    { axis: 'sagittal', position: 0, flipped: false },
+    { axis: 'coronal', position: 0.42, flipped: true },
+    { axis: 'transverse', position: -1, flipped: false },
+  ] as const)('bolak-balik utuh: %o', (clip) => {
+    const decoded = decodeState(encodeState({ ...base, clip }, SYSTEMS), SYSTEMS)
+    expect(decoded?.clip?.axis).toBe(clip.axis)
+    expect(decoded?.clip?.flipped).toBe(clip.flipped)
+    expect(decoded?.clip?.position).toBeCloseTo(clip.position, 3)
+  })
+
+  it('sumbu tak dikenal tidak ditebak — lebih baik tidak memotong', () => {
+    const rusak = encodeState({ ...base, clip: { axis: 'sagittal', position: 0.5, flipped: false } }, SYSTEMS)
+      .replace('k=s_', 'k=q_')
+    // Sisa state tetap terbaca; hanya bidang potongnya yang dibuang.
+    const decoded = decodeState(rusak, SYSTEMS)
+    expect(decoded).not.toBeNull()
+    expect(decoded?.clip).toBeNull()
   })
 })

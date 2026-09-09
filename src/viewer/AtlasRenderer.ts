@@ -19,11 +19,12 @@ import { CameraController } from './CameraController'
 import { PickingPass } from './PickingPass'
 import { SelectState, StateTexture, XformTexture, type SelectStateValue } from './StateTexture'
 import { computeExplodeLayout, type ExplodeItem } from './ExplodeLayout'
+import { planeFromSpec } from './ClipPlane'
 import { VisibilityController, type SystemState } from './VisibilityController'
 import { VISIBILITY_PRESETS } from './presets'
 import { ViewerEmitter } from './events'
 import { fetchBatch, fetchManifest, type AtlasManifest } from './loaders/AtlasLoader'
-import type { ViewPreset, ViewerStats } from './types'
+import type { ClipSpec, ViewPreset, ViewerStats } from './types'
 
 /** §E3 AC2: hover picking di-throttle <= 20 Hz. */
 const HOVER_INTERVAL_MS = 50
@@ -272,6 +273,13 @@ export class AtlasRenderer {
    * `Box3.setFromObject` tidak bisa dipakai: atribut posisi masih Int16
    * terkuantisasi dan baru jadi koordinat dunia di dalam vertex shader.
    */
+  // --- potongan anatomis (§E13) ---
+  private clip: ClipSpec | null = null
+  private readonly clipPlane = new THREE.Plane()
+  /** Array stabil: three membacanya tiap frame, jangan bikin baru terus. */
+  private readonly clipPlanes: THREE.Plane[] = [this.clipPlane]
+  private readonly clipNormal = new THREE.Vector3()
+
   private readonly worldBox = new THREE.Box3()
 
   private expandBounds(
@@ -357,6 +365,7 @@ export class AtlasRenderer {
     visibleSystems: string[]
     opacities: Record<string, number>
     selection: number[]
+    clip?: ClipSpec | null
   }): void {
     const vis = this.visibility
     if (vis) {
@@ -379,12 +388,67 @@ export class AtlasRenderer {
       if (idx >= 0 && idx < this.structureCount) this.select(idx, true)
     }
 
+    this.setClip(state.clip ?? null)
+
     this.camera?.setState(state.cameraPosition, state.cameraTarget)
     this.requestRender()
   }
 
   systems(): SystemState[] {
     return this.visibility?.snapshot() ?? []
+  }
+
+  // --- potongan anatomis (§E13) ---
+
+  /**
+   * Pasang atau lepas bidang potong. `null` mematikan pemotongan.
+   *
+   * Geometri tidak pernah disentuh (§5.2): pemotongan terjadi di fragment
+   * shader lewat `renderer.clippingPlanes`, dan pass picking memakai bidang
+   * yang sama persis supaya yang bisa diklik = yang terlihat.
+   */
+  setClip(spec: ClipSpec | null): void {
+    this.clip = spec
+    this.applyClip()
+    this.requestRender()
+  }
+
+  clipSpec(): ClipSpec | null {
+    return this.clip ? { ...this.clip } : null
+  }
+
+  private applyClip(): void {
+    const renderer = this.renderer
+    if (!renderer) return
+
+    const spec = this.clip
+    if (!spec) {
+      renderer.clippingPlanes = []
+      this.batches?.setClipping(false)
+      return
+    }
+
+    const box = this.worldBox
+    const m = planeFromSpec(
+      spec,
+      [box.min.x, box.min.y, box.min.z],
+      [box.max.x, box.max.y, box.max.z],
+    )
+    this.clipNormal.set(m.normal[0], m.normal[1], m.normal[2])
+    this.clipPlane.set(this.clipNormal, m.constant)
+    renderer.clippingPlanes = this.clipPlanes
+    this.batches?.setClipping(true)
+  }
+
+  /** Posisi bidang potong dalam mm dari titik tengah tubuh, untuk label UI. */
+  clipOffsetMm(): number | null {
+    if (!this.clip) return null
+    const box = this.worldBox
+    return planeFromSpec(
+      this.clip,
+      [box.min.x, box.min.y, box.min.z],
+      [box.max.x, box.max.y, box.max.z],
+    ).offsetMm
   }
 
   setVisibility(idx: number, visible: boolean): void {

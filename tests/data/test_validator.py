@@ -40,6 +40,7 @@ def load_validator(data_dir: Path):
     mod.CONTENT = data_dir / "content"
     mod.CLINICAL = data_dir / "content" / "clinical"
     mod.QUIZ = data_dir / "content" / "quiz"
+    mod.NOMENCLATURE = data_dir / "content"
     mod.ERRORS, mod.WARNINGS, mod.NOTES = [], [], []
     return mod
 
@@ -49,8 +50,13 @@ def run(data_dir: Path) -> list[str]:
     manifest = json.loads(mod.MANIFEST.read_text(encoding="utf-8"))
     in_geom = mod.validate_geometry(manifest)
     by_fma = mod.validate_structures(manifest, in_geom)
+    # ⚠️ Urutannya harus sama dengan main() di 05_validate.py: validate_quiz
+    # butuh peta status nomenklatur untuk menegakkan §E10 AC14 (jawaban benar
+    # tidak boleh berstatus machine/needs-review). Pemanggilan tanpa argumen
+    # itu sempat lolos di sini selama beberapa fase — lihat D-042.
+    nomen = mod.validate_nomenclature(by_fma)
     mod.validate_clinical(by_fma)
-    mod.validate_quiz(by_fma)
+    mod.validate_quiz(by_fma, nomen)
     return mod.ERRORS
 
 

@@ -36,6 +36,7 @@ import { useOffline } from '@/lib/offline'
 import { ThemeToggle } from '@/components/ThemeToggle/ThemeToggle'
 import { CANVAS_BG, useTheme } from '@/lib/theme'
 import { ExplodeControl } from '@/components/ExplodeControl/ExplodeControl'
+import { CrossSectionControl } from '@/components/CrossSection/CrossSectionControl'
 import { DevOverlay } from '@/components/DevOverlay/DevOverlay'
 import { SearchBar } from '@/components/SearchBar/SearchBar'
 import { SystemTree } from '@/components/SystemTree/SystemTree'
@@ -45,6 +46,7 @@ import { AtlasRenderer, EXPLODE_WARN_THRESHOLD } from '@/viewer/AtlasRenderer'
 import { SYSTEM_ORDER } from '@/viewer/BatchManager'
 import { VISIBILITY_PRESETS } from '@/viewer/presets'
 import type {
+  ClipSpec,
   HoverInfo,
   LoadProgress,
   SystemState,
@@ -77,6 +79,9 @@ export function AtlasViewer() {
   const offline = useOffline()
   const [modelStats, setModelStats] = useState<{ structures: number; triangles: number } | null>(null)
   const [explode, setExplode] = useState(0)
+  const [clip, setClip] = useState<ClipSpec | null>(null)
+  /** mm dari titik tengah tubuh; dihitung viewer karena ia yang tahu bounding box. */
+  const [clipOffsetMm, setClipOffsetMm] = useState<number | null>(null)
   const { choice: themeChoice, resolved: theme, setChoice: setTheme } = useTheme()
   const isMobile = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -117,6 +122,8 @@ export function AtlasViewer() {
             shown.size === expected.size &&
             [...shown].every((id) => expected.has(id))
           setActivePreset(cocok ? restored.presetId : null)
+          setClip(restored.clip)
+          setClipOffsetMm(renderer.clipOffsetMm())
         }
       }),
       renderer.events.on('systems', setSystems),
@@ -190,6 +197,18 @@ export function AtlasViewer() {
     rendererRef.current?.setExplode(v, false)
   }
 
+  /**
+   * §E13. Bidang potong bukan state per-frame: user menggeser slider, bukan
+   * kamera. Cukup jadi state React biasa, dan offset mm-nya ditanyakan ke
+   * viewer karena bounding box tubuh hidup di sana.
+   */
+  const handleClip = (spec: ClipSpec | null): void => {
+    setClip(spec)
+    const r = rendererRef.current
+    r?.setClip(spec)
+    setClipOffsetMm(r?.clipOffsetMm() ?? null)
+  }
+
   const handleVisibilityPreset = (presetId: string): void => {
     rendererRef.current?.applyPreset(presetId)
     setActivePreset(presetId)
@@ -217,6 +236,7 @@ export function AtlasViewer() {
         ),
         selection: r.currentSelection(),
         presetId: activePreset,
+        clip: r.clipSpec(),
       },
       SYSTEM_ORDER,
     )
@@ -225,9 +245,12 @@ export function AtlasViewer() {
     return `${window.location.origin}${window.location.pathname}#${encoded}`
   }, [systems, activePreset])
 
+  // `clip` ada di sini, bukan di dependency writeHash: nilainya dibaca dari
+  // renderer (`r.clipSpec()`), jadi ia bukan dependency callback-nya — yang
+  // benar adalah "tulis ulang hash setiap bidang potong berubah".
   useEffect(() => {
     if (ready) writeHash()
-  }, [ready, writeHash, selection])
+  }, [ready, writeHash, selection, clip])
 
   const handleCopyLink = (): void => {
     const url = writeHash()
@@ -490,13 +513,27 @@ export function AtlasViewer() {
         </div>
       )}
 
+      {/*
+        Satu kolom, bukan dua elemen dengan offset absolut masing-masing.
+        Kontrol explode tumbuh saat peringatan "terlalu padat" muncul, dan
+        kontrol potongan tumbuh saat aktif — offset tetap pasti bertabrakan
+        cepat atau lambat.
+      */}
       {ready && !isMobile && (
-        <ExplodeControl
-          value={explode}
-          visibleCount={systems.reduce((n, x) => n + (x.visible ? x.count : 0), 0)}
-          warnThreshold={EXPLODE_WARN_THRESHOLD}
-          onChange={handleExplode}
-        />
+        <div className="pointer-events-none absolute bottom-20 left-1/2 z-20 flex w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2">
+          <CrossSectionControl
+            value={clip}
+            offsetMm={clipOffsetMm}
+            language={language}
+            onChange={handleClip}
+          />
+          <ExplodeControl
+            value={explode}
+            visibleCount={systems.reduce((n, x) => n + (x.visible ? x.count : 0), 0)}
+            warnThreshold={EXPLODE_WARN_THRESHOLD}
+            onChange={handleExplode}
+          />
+        </div>
       )}
 
       {ready && <ViewToolbar onPreset={handlePreset} onReset={handleReset} />}

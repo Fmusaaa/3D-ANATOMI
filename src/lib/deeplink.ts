@@ -13,14 +13,17 @@
  *   o  opacity per sistem, hanya yang != 100
  *   s  structureIdx terpilih
  *   p  id preset visibilitas, kalau tampilannya persis sebuah preset
+ *   k  bidang potong (§E13): <sumbu>_<posisi x1000>_<flip>
  *
  * Bagian yang nilainya default DIHILANGKAN, bukan ditulis kosong — URL untuk
  * tampilan awal jadi pendek.
  *
- * ⚠️ Menaikkan versi format WAJIB kalau field berubah arti. Decoder menolak
- * versi yang tidak dikenal dan mengembalikan null, supaya link lama tidak
- * di-restore jadi tampilan yang salah tanpa ada yang sadar.
+ * ⚠️ Menaikkan versi format WAJIB kalau field berubah ARTI. Menambah field
+ * baru yang opsional (seperti `k`) tidak: tautan lama tanpa `k` tetap terbaca
+ * benar, dan field yang tidak dikenal memang diabaikan. Versi tetap 1.
  */
+
+import type { ClipAxis, ClipSpec } from '@/viewer/types'
 
 const VERSION = 1
 const PREFIX = `a${String(VERSION)}`
@@ -37,7 +40,16 @@ export interface DeepLinkState {
   opacities: Record<string, number>
   selection: number[]
   presetId: string | null
+  /** Bidang potong anatomis (§E13); null kalau tidak memotong. */
+  clip: ClipSpec | null
 }
+
+/** Sumbu -> satu huruf. Dipendekkan karena §E14 AC2 membatasi panjang URL. */
+const AXIS_CHAR: Record<ClipAxis, string> = { sagittal: 's', coronal: 'c', transverse: 't' }
+const CHAR_AXIS: Record<string, ClipAxis> = { s: 'sagittal', c: 'coronal', t: 'transverse' }
+
+/** Posisi −1..1 disimpan sebagai bilangan bulat per-seribu: presisi 0,1% tubuh. */
+const CLIP_SCALE = 1000
 
 /** Base36 bertanda: -42 -> "-16". */
 function enc(n: number): string {
@@ -80,6 +92,12 @@ export function encodeState(state: DeepLinkState, systemOrder: readonly string[]
     parts.push(`s=${state.selection.map((i) => i.toString(36)).join(SUB)}`)
   }
   if (state.presetId) parts.push(`p=${state.presetId}`)
+
+  if (state.clip) {
+    const axis = AXIS_CHAR[state.clip.axis]
+    const pos = enc(state.clip.position * CLIP_SCALE)
+    parts.push(`k=${axis}${SUB}${pos}${SUB}${state.clip.flipped ? '1' : '0'}`)
+  }
 
   return parts.join(SEP)
 }
@@ -147,5 +165,22 @@ export function decodeState(
     opacities,
     selection,
     presetId: field.get('p') ?? null,
+    clip: decodeClip(field.get('k')),
+  }
+}
+
+function decodeClip(raw: string | undefined): ClipSpec | null {
+  if (!raw) return null
+  const [axisChar, posRaw, flipRaw] = raw.split(SUB)
+  const axis = axisChar === undefined ? undefined : CHAR_AXIS[axisChar]
+  const pos = posRaw === undefined ? null : dec(posRaw)
+  // Sumbu tak dikenal berarti tautan dari versi lain: jangan menebak bidang
+  // potong. Lebih baik tidak memotong sama sekali daripada memotong di bidang
+  // yang salah dan tampak meyakinkan.
+  if (axis === undefined || pos === null) return null
+  return {
+    axis,
+    position: Math.min(1, Math.max(-1, pos / CLIP_SCALE)),
+    flipped: flipRaw === '1',
   }
 }

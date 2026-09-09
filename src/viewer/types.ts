@@ -33,6 +33,80 @@ export const VIEW_PRESET_LABELS: Record<ViewPreset, string> = {
   inferior: 'Inferior',
 }
 
+/**
+ * Bidang potong anatomis (§E13).
+ *
+ * Tiga bidang baku anatomi, bukan sumbu sembarang — mahasiswa membaca potongan
+ * dalam istilah ini, dan CT/MRI juga memakainya.
+ */
+export type ClipAxis = 'sagittal' | 'coronal' | 'transverse'
+
+export interface ClipSpec {
+  axis: ClipAxis
+  /** −1..1 relatif terhadap bounding box: −1 tepi negatif, 0 tengah, +1 tepi positif. */
+  position: number
+  /** Balik sisi mana yang dipertahankan. */
+  flipped: boolean
+}
+
+/**
+ * Ketiga bahasa diisi lengkap, sederajat (D-027).
+ *
+ * Tidak ada yang boleh jatuh diam-diam ke bahasa lain: kalau `en` kosong dan
+ * UI menampilkan Latin, user mengira itu istilah Inggris. Nama bidang anatomi
+ * cukup sedikit untuk ditulis ketiganya di sini.
+ */
+export const CLIP_AXIS_LABEL: Record<ClipAxis, { la: string; id: string; en: string }> = {
+  sagittal: { la: 'Planum sagittale', id: 'Bidang sagital', en: 'Sagittal plane' },
+  coronal: { la: 'Planum coronale', id: 'Bidang koronal', en: 'Coronal plane' },
+  transverse: { la: 'Planum transversale', id: 'Bidang transversal', en: 'Transverse plane' },
+}
+
+/**
+ * Bentuk pendek untuk tombol sempit.
+ *
+ * D-027 mengizinkan ini: yang dilarang adalah menampilkan satu bahasa lebih
+ * utama, bukan memendekkan. Nama penuh ketiga bahasa tetap ada di tooltip,
+ * jadi tidak ada bahasa yang hilang.
+ */
+export const CLIP_AXIS_SHORT: Record<ClipAxis, { la: string; id: string; en: string }> = {
+  sagittal: { la: 'Sagittale', id: 'Sagital', en: 'Sagittal' },
+  coronal: { la: 'Coronale', id: 'Koronal', en: 'Coronal' },
+  transverse: { la: 'Transversale', id: 'Transversal', en: 'Transverse' },
+}
+
+export type ClipSide = 'sinistra' | 'dextra' | 'anterior' | 'posterior' | 'superior' | 'inferior'
+
+export const CLIP_SIDE_LABEL: Record<ClipSide, { la: string; id: string; en: string }> = {
+  sinistra: { la: 'Sinistra', id: 'Kiri pasien', en: "Patient's left" },
+  dextra: { la: 'Dextra', id: 'Kanan pasien', en: "Patient's right" },
+  anterior: { la: 'Anterior', id: 'Depan', en: 'Anterior' },
+  posterior: { la: 'Posterior', id: 'Belakang', en: 'Posterior' },
+  superior: { la: 'Superior', id: 'Atas', en: 'Superior' },
+  inferior: { la: 'Inferior', id: 'Bawah', en: 'Inferior' },
+}
+
+/**
+ * Sisi tubuh yang tersisa setelah pemotongan.
+ *
+ * Menyebut sisi yang DIPERTAHANKAN, bukan yang dibuang — itu yang dilihat user
+ * di layar. Ditaruh di `types.ts` karena UI perlu memanggilnya, dan §5.5 hanya
+ * mengizinkan komponen menyentuh viewer lewat modul ini.
+ *
+ * ⚠️ Sisi KANAN pasien ada di X negatif (lihat `04_pack_batches.py` dan preset
+ * `lateral-dextra`). Setengah-ruang +X karena itu adalah sisi KIRI.
+ */
+export function keptSide(spec: ClipSpec): ClipSide {
+  switch (spec.axis) {
+    case 'sagittal':
+      return spec.flipped ? 'dextra' : 'sinistra'
+    case 'coronal':
+      return spec.flipped ? 'posterior' : 'anterior'
+    case 'transverse':
+      return spec.flipped ? 'inferior' : 'superior'
+  }
+}
+
 /** Status satu sistem organ, untuk panel kontrol visibilitas (§E4). */
 export interface SystemState {
   id: string
