@@ -116,6 +116,14 @@ Buka demo, orbit 30 detik, kagum, tutup. Ini yang bikin proyek ini juga berfungs
 
 ### 3.2 User journey inti
 
+> ⚠️ **KOREKSI (D-020):** J1 dan J4 memakai *nervus medianus* sebagai contoh.
+> Saraf perifer ekstremitas **tidak ada sama sekali** di BodyParts3D — nol hasil
+> untuk `sciatic`, dan hanya 34 saraf bernama yang semuanya kranial/orbital.
+> Alur kedua journey ini sudah jalan (search → fly-to → panel detail), tapi
+> **tidak bisa didemonstrasikan dengan struktur yang disebut di sini.** Contoh
+> yang setara dan tersedia: *a. carotis interna*, *m. biceps brachii*, *hepar*.
+> Kekuatan dataset ada di kardiovaskular (1.057), muskuloskeletal (646), viscera.
+
 **J1 — "Cari struktur"**
 Buka app → ketik "nervus medianus" di search → hasil muncul (Latin + ID) → klik → kamera fly-to struktur → struktur ter-highlight, sisanya jadi transparan → panel detail muncul (nama, sistem, asal, perjalanan, inervasi, klinis).
 
@@ -154,6 +162,13 @@ Notasi: **P0** = tanpa ini produk gak jalan. **P1** = pembeda utama. **P2** = pe
 | E14 | Share deep-link state (URL) | P2 | F3 |
 | E15 | Anotasi & bookmark user | P3 | F9 |
 | E16 | WebMCP tools | P3 | — |
+
+> **Catatan:** E12, E13, dan E15 hanya punya satu baris di tabel ini — tanpa AC
+> rinci. Kontrak ketiganya ditetapkan saat implementasi dan dicatat di
+> `DECISIONS.md`: **D-038/D-039** (kebijakan cache offline), **D-041/D-042**
+> (bidang potong anatomis + konvensi sumbu lateral), **D-043** (catatan &
+> bookmark). Baca itu, bukan tabel ini, kalau mau tahu apa yang sebenarnya
+> dijanjikan.
 
 ### 4.2 Explicit non-goals v1
 
@@ -659,7 +674,10 @@ Format: **User story** → **AC** (harus objektif & bisa dites).
 **Story:** Dosen gw nyebut "nervus ischiadicus", buku bahasa Inggris nyebut "sciatic nerve", gw butuh dua-duanya.
 
 **AC:**
-1. Toggle bahasa utama: **Latin (TA)** / **Indonesia** / **Inggris**. Default: Latin, dengan Indonesia sebagai subtitle.
+1. ~~Toggle bahasa utama: **Latin (TA)** / **Indonesia** / **Inggris**. Default: Latin, dengan Indonesia sebagai subtitle.~~
+   **KOREKSI (D-027):** ketiga bahasa ditampilkan **sederajat** — tidak ada yang
+   jadi subtitle atau dicetak lebih kecil. Yang mengikat ketiganya adalah FMA ID.
+   Toggle LA/ID/EN hanya menentukan urutan dan mana yang muat di tempat sempit.
 2. Perubahan bahasa berlaku di: panel detail, tooltip, hasil search, quiz — semuanya, dalam satu render.
 3. Search selalu mencari di **semua** bahasa terlepas dari bahasa tampilan.
 4. Entri dengan `status: machine` selalu punya badge visual dan tooltip penjelas.
@@ -784,7 +802,16 @@ Format: **User story** → **AC** (harus objektif & bisa dites).
                  [Anterior][Lateral][Superior][Reset]  ← toolbar mengambang
 ```
 
-Panel kiri & kanan bisa di-collapse. Saat quiz aktif, panel kanan diganti panel quiz, panel kiri di-collapse otomatis.
+Panel kiri & kanan bisa di-collapse. Saat quiz aktif, panel kanan diganti panel
+quiz, panel kiri di-collapse otomatis.
+
+> ⚠️ **KOREKSI:** dua hal di sketsa ini sudah tidak berlaku.
+> (a) "Nervus medianus / Saraf median" menggambarkan Latin besar + Indonesia
+> sebagai subtitle; yang dibangun menampilkan ketiganya sederajat (D-027).
+> (b) Strukturnya sendiri tidak ada di dataset (D-020).
+> Toolbar mengambang di bawah kanvas kini berisi tiga baris dalam satu kolom
+> flex: potongan anatomis (§E13), explode (§E6), lalu preset sudut pandang —
+> offset absolut terpisah selalu bertabrakan begitu salah satunya tumbuh.
 
 ### 8.3 Layout mobile
 
@@ -859,7 +886,9 @@ Wajib ada untuk:
 ### 11.2 E2E (Playwright)
 
 - Load app → orbit → klik struktur → panel detail benar.
-- Search "nervus medianus" → Enter → struktur terpilih.
+- ~~Search "nervus medianus" → Enter → struktur terpilih.~~ **KOREKSI (D-020):**
+  struktur ini tidak ada di dataset. Diuji dengan struktur yang tersedia
+  (mis. "femur" → Enter → struktur terpilih).
 - Toggle sistem → screenshot → bandingkan baseline.
 - Explode 0% → 100% → screenshot di 3 viewport.
 - Jalankan sesi quiz 5 soal sampai ringkasan.
