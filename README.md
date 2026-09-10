@@ -27,6 +27,17 @@ pip install -r scripts/requirements.txt
 npm run data:download
 ```
 
+## Review nomenklatur
+
+811 istilah Latin/Indonesia diturunkan mesin dan **0 terverifikasi**. Reviewnya
+lewat spreadsheet — lihat [`data_curated/README.md`](data_curated/README.md).
+
+```bash
+npm run nomen:sheet -- --lang la --out review-la.tsv
+npm run nomen:apply -- review-la.tsv --by "Nama Lengkap"
+npm run nomen:status
+```
+
 ## Offline (PWA)
 
 Service worker sengaja **tidak aktif di `npm run dev`** — cache-nya bertabrakan

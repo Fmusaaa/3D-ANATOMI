@@ -39,6 +39,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from nomenclature_reviews import apply_reviews, load_reviews  # noqa: E402
 CONTENT = REPO_ROOT / "public" / "data" / "content"
 STRUCTURES = CONTENT / "structures.json"
 OUT_LA = CONTENT / "nomenclature.la.json"
@@ -314,11 +316,19 @@ def main() -> int:
         if len(samples) < args.sample:
             samples.append((en, latin, indo))
 
+    # Timpakan buku besar review manusia (data_curated/nomenclature_reviews.json).
+    # Tanpa langkah ini, tiap `npm run data:build` menghapus seluruh hasil review
+    # tanpa jejak — lihat scripts/nomenclature_reviews.py.
+    reviews = load_reviews()
+    la_entries, la_replaced, la_added = apply_reviews(la_entries, "la", reviews)
+    id_entries, id_replaced, id_added = apply_reviews(id_entries, "id", reviews)
+
     note = (
-        "SEMUA entri di file ini berstatus `machine` dan BELUM diverifikasi "
-        "manusia. Wajib berbadge di UI (§E7 AC4) dan tidak boleh dipakai "
-        "sebagai jawaban benar di quiz (§E10 AC14). Naikkan status ke "
-        "`reviewed` hanya setelah diperiksa terhadap Terminologia Anatomica."
+        "Entri berstatus `machine`/`needs-review` BELUM diverifikasi manusia: "
+        "wajib berbadge di UI (§E7 AC4) dan tidak boleh dipakai sebagai jawaban "
+        "benar di quiz (§E10 AC14). Entri `reviewed` berasal dari "
+        "data_curated/nomenclature_reviews.json — JANGAN edit file ini langsung, "
+        "ia dibangun ulang tiap pipeline jalan."
     )
     for path, entries, lang in ((OUT_LA, la_entries, "la"), (OUT_ID, id_entries, "id")):
         path.write_text(
@@ -340,18 +350,25 @@ def main() -> int:
         print(f"  {'':44s}    {idn}")
     print("\n" + "=" * 68)
     risky_n = sum(1 for e in la_entries if e["status"] == "needs-review")
+    reviewed_la = sum(1 for e in la_entries if e["status"] == "reviewed")
+    reviewed_id = sum(1 for e in id_entries if e["status"] == "reviewed")
     print(f"konsep total       : {total}")
     print(f"berhasil diturunkan: {done}  ({100 * done / total:.1f}%)")
-    print(f"  status machine       : {done - risky_n}  (1 adjektiva, urutan pasti)")
+    print(f"  status machine       : {done - risky_n - la_replaced}  (1 adjektiva, urutan pasti)")
     print(f"  status needs-review  : {risky_n}  (>1 adjektiva, urutan tebakan)")
+    print(f"review manusia     : la {reviewed_la} (ganti {la_replaced}, tambah {la_added}) · "
+          f"id {reviewed_id} (ganti {id_replaced}, tambah {id_added})")
     print(f"dilewati           : {len(skipped)}  ({100 * len(skipped) / total:.1f}%)")
     print("\nDilewati BUKAN kegagalan — itu keluaran yang benar untuk nama yang")
     print("butuh konstruksi genitif atau memuat kata di luar kamus.")
     print(f"\ncontoh yang dilewati: {skipped[:5]}")
     print(f"\nditulis: {OUT_LA.relative_to(REPO_ROOT)}")
     print(f"         {OUT_ID.relative_to(REPO_ROOT)}")
-    print("\n⚠️  SEMUANYA berstatus `machine`. §E7 AC6 menuntut `reviewed`,")
-    print("    jadi cakupan v1.0 BELUM terpenuhi sampai ada review manusia.")
+    if reviewed_la == 0 and reviewed_id == 0:
+        print()
+        print("⚠️  Belum ada satu pun entri `reviewed`. §E7 AC6 menuntutnya,")
+        print("    jadi cakupan v1.0 BELUM terpenuhi. Mulai lewat:")
+        print("    python scripts/07_review_nomenclature.py sheet --lang la")
     return 0
 
 

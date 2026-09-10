@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "note": "CONTOH FORMAT. Salin ke high_yield.json dan isi dengan FMA struktur yang keluar di ujian anatomi preklinik (D7: silabus blok anatomi + Sobotta). Begitu file ini ada: 03_decimate.py memberi bobot 2,0 pada struktur ini (jalankan ulang 03 & 04), 07_review_nomenclature.py mengurutkannya paling depan, dan §E7 AC6 jadi bisa diukur.",
+  "fma": [
+    "FMA7163",
+    "FMA24475"
+  ]
+}

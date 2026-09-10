@@ -19,7 +19,10 @@
     "validate": "python scripts/05_validate.py",
     "test:data": "python scripts/run_tests.py",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "nomen:sheet": "python scripts/07_review_nomenclature.py sheet",
+    "nomen:apply": "python scripts/07_review_nomenclature.py apply",
+    "nomen:status": "python scripts/07_review_nomenclature.py status"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.3.3",

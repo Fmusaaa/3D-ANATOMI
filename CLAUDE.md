@@ -51,8 +51,11 @@ Batas modul di atas **ditegakkan ESLint**, bukan cuma niat — lihat
 | `npm run data:download` | Unduh + verifikasi BodyParts3D ke `data_raw/` |
 | `npm run data:build` | Pipeline Python penuh → `.atlas` + manifest |
 | `npm run validate` | Validasi data (§11.3). Wajib lulus sebelum commit |
-| `python scripts/06_nomenclature.py` | Turunkan nomenklatur (semua `machine`) |
-| `npm run test:data` | 3 suite test data (Python) |
+| `python scripts/06_nomenclature.py` | Turunkan nomenklatur mesin + timpakan buku besar review |
+| `npm run nomen:sheet -- --lang la --out review-la.tsv` | Ekspor lembar review TSV |
+| `npm run nomen:apply -- review-la.tsv --by "Nama"` | Terapkan keputusan ke `data_curated/nomenclature_reviews.json` |
+| `npm run nomen:status` | Cakupan vs §E7 AC6 |
+| `npm run test:data` | 5 suite test data (Python) |
 | `npm test` | Unit test Vitest |
 | `npm run preview` | Serve build produksi (port 4173). **Satu-satunya cara menguji service worker** — di `dev` sengaja dimatikan |
 
@@ -149,6 +152,10 @@ viewer di luar `types.ts`/`events.ts`.
   — jangan cek `status === 'reviewed'` tersebar di komponen.
 - Jangan menaikkan status ke `reviewed` tanpa mengisi `reviewedBy`. Validator
   menolaknya, dan klaim "terverifikasi" harus bisa dipertanggungjawabkan.
+- **Jangan edit `public/data/content/nomenclature.*.json` langsung.** Itu
+  keluaran pipeline dan dibangun ulang tiap `data:build`. Review manusia masuk
+  ke `data_curated/nomenclature_reviews.json` lewat `07_review_nomenclature.py`
+  (D-044).
 - Jangan biarkan nama satu bahasa jatuh diam-diam ke bahasa lain. Kalau Latin
   belum ada, tampilkan "belum ada" — bukan nama Inggris yang menyamar.
 - Jangan menampilkan satu bahasa lebih besar/utama dari yang lain (D-027).

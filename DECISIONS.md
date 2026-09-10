@@ -1057,3 +1057,57 @@ untuk menghabisi kerja berminggu-minggu.
 `lib/db.ts` mengembalikan nilai kosong alih-alih melempar, dan UI mengatakannya
 — fitur catatan yang diam-diam tidak menyimpan apa pun jauh lebih buruk
 daripada fitur yang mengaku tidak bisa menyimpan.
+
+## D-044 — Review nomenklatur: buku besar manusia yang ditimpakan generator
+
+**Tanggal:** 10 September 2026 · **Fase:** F5 (kurasi) · **Status:** alat siap, isi 0
+
+§E7 AC6 menuntut status `reviewed`, dan 0 dari 811 entri memilikinya. Alatnya
+belum pernah ada — reviewer harus mengedit JSON keluaran pipeline dengan
+tangan, yang dihapus oleh `npm run data:build` berikutnya. Itu bukan alur
+kerja; itu jebakan.
+
+**Keputusan manusia hidup di `data_curated/nomenclature_reviews.json`, dan
+generator 06 menimpakannya di atas hasil mesin.** Entri `reviewed` tidak
+pernah ditulis ulang mesin, dan FMA yang mesin lewati bisa ditambahkan dari
+nol — itulah cara cakupan tumbuh melewati 28% yang bisa dicapai aturan.
+
+Diuji: keluaran identik setelah regenerasi ganda, review bahasa `id` tidak
+bocor ke keluaran `la`, dan buku besar yang cacat (tanpa `reviewedBy`) membuat
+generator MELEDAK alih-alih diam-diam melewatinya.
+
+### Alur spreadsheet, bukan satu-satu
+
+`07_review_nomenclature.py sheet` mengekspor TSV yang dibuka di Excel/Sheets;
+kolom `decision` diisi `ok`/`fix`/`skip`; `apply` menulisnya ke buku besar lalu
+menjalankan 06. Diurut: high-yield (kalau daftarnya ada) → `needs-review` →
+`machine` → tanpa entri.
+
+`apply` menolak **seluruh berkas** kalau satu baris ambigu. Mengimpor separuh
+berarti reviewer mengira 200 entri masuk padahal 180 — dan yang 20 tidak akan
+pernah dicari lagi. Nama reviewer wajib (`--by`), masuk ke `reviewedBy`.
+
+Rantai penuh diverifikasi dengan tiga review sementara: sheet → apply → buku
+besar → 06 → validator LULUS (3 reviewed, 154 needs-review) → app menampilkan
+"3 terverifikasi", peringatan nol hilang, dan entri reviewed keluar dari
+antrian koreksi. Lalu ketiganya DIHAPUS — itu uji, bukan keputusan.
+
+### Yang alat ini sengaja tidak lakukan
+
+Ia tidak menebak dan tidak menyarankan terjemahan. CLAUDE.md: *"User-nya calon
+dokter. 40 catatan yang benar > 400 yang mungkin salah."* Keputusannya milik
+reviewer; alat hanya memastikan keputusan itu tercatat dengan nama, tanggal,
+sumber — dan tidak pernah hilang.
+
+### Temuan: daftar high-yield tidak ada
+
+`highYield` bernilai `false` untuk seluruh 2.234 struktur (D-010: D7 diputuskan
+"pakai default"). Konsekuensinya lebih besar dari yang tercatat waktu itu:
+
+- target Latin di §E7 AC6 ("100% high-yield") **tidak bisa diukur** — himpunannya kosong;
+- antrian review tidak punya prioritas yang bermakna secara pedagogis;
+- filter quiz "struktur high-yield" (§E10 AC1) akan kosong.
+
+`data_curated/high_yield.example.json` menunjukkan formatnya. Isinya butuh
+silabus dan Sobotta — pengetahuan domain product owner, bukan sesuatu yang
+boleh saya karang.
