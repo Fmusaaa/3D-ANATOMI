@@ -1,0 +1,3 @@
+# Geometri .atlas adalah biner: jangan pernah dinormalkan akhir barisnya,
+# sha256-nya dicek validator terhadap manifest.
+*.atlas binary

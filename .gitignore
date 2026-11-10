@@ -26,10 +26,10 @@ dist-ssr
 # === Corpus: pipeline data (PRD §6.2) ===
 # Data mentah BodyParts3D & hasil antara TIDAK di-commit. Regenerate lewat
 # `npm run data:download` + `npm run data:build`.
+# Keluaran akhir (public/data/**) DI-COMMIT sejak D-046: Vercel membangun dari
+# git dan tidak bisa menjalankan pipeline Python.
 data_raw/
 data_interim/
-public/data/geometry/*.atlas
-public/data/manifest.json
 
 # Python
 __pycache__/
@@ -41,4 +41,3 @@ venv/
 test-results/
 playwright-report/
 coverage/
-public/data/content/structures.json
