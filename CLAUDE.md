@@ -10,7 +10,9 @@ visibilitas, pencarian, deep link, nomenklatur, exploded view, tema
 terang/gelap, PWA offline, potongan anatomis, serta catatan & bookmark
 sudah jalan.
 **0 entri nomenklatur terverifikasi** — §E7 AC6 menunggu review manusia.
-Deploy publik pertama masih tertahan konflik lisensi BodyParts3D (D-005).
+79% konsep punya Latin, tapi 2.210 di antaranya draf ingatan model (`source:
+llm`, D-045): berbadge, bukan acuan. Deploy untuk belajar pribadi diputuskan
+product owner (D-046); aset `public/data/` kini ikut git.
 
 ---
 
@@ -55,7 +57,7 @@ Batas modul di atas **ditegakkan ESLint**, bukan cuma niat — lihat
 | `npm run nomen:sheet -- --lang la --out review-la.tsv` | Ekspor lembar review TSV |
 | `npm run nomen:apply -- review-la.tsv --by "Nama"` | Terapkan keputusan ke `data_curated/nomenclature_reviews.json` |
 | `npm run nomen:status` | Cakupan vs §E7 AC6 |
-| `npm run test:data` | 5 suite test data (Python) |
+| `npm run test:data` | 6 suite test data (Python) |
 | `npm test` | Unit test Vitest |
 | `npm run preview` | Serve build produksi (port 4173). **Satu-satunya cara menguji service worker** — di `dev` sengaja dimatikan |
 
@@ -152,6 +154,9 @@ viewer di luar `types.ts`/`events.ts`.
   — jangan cek `status === 'reviewed'` tersebar di komponen.
 - Jangan menaikkan status ke `reviewed` tanpa mengisi `reviewedBy`. Validator
   menolaknya, dan klaim "terverifikasi" harus bisa dipertanggungjawabkan.
+- Jangan menaikkan entri `source: "llm"` ke `reviewed`. Itu draf ingatan model
+  (`data_curated/nomenclature_draft.tsv`); hanya manusia, lewat buku besar
+  review, yang boleh memverifikasi (D-045).
 - **Jangan edit `public/data/content/nomenclature.*.json` langsung.** Itu
   keluaran pipeline dan dibangun ulang tiap `data:build`. Review manusia masuk
   ke `data_curated/nomenclature_reviews.json` lewat `07_review_nomenclature.py`

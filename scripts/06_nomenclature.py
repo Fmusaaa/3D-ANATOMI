@@ -41,6 +41,7 @@ if hasattr(sys.stdout, "reconfigure"):
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from nomenclature_reviews import apply_reviews, load_reviews  # noqa: E402
+from nomenclature_draft import indonesian_from_latin, load_draft, resolve  # noqa: E402
 CONTENT = REPO_ROOT / "public" / "data" / "content"
 STRUCTURES = CONTENT / "structures.json"
 OUT_LA = CONTENT / "nomenclature.la.json"
@@ -290,7 +291,24 @@ def main() -> int:
     skipped: list[str] = []
     samples: list[tuple[str, str, str]] = []
 
+    # Draf LLM menang atas aturan (urutan kata aturan sering salah), tapi kalah
+    # dari review manusia yang ditimpakan sesudah loop ini.
+    draft = load_draft()
+    llm_la = llm_id = 0
+
     for fma, en in sorted(seen.items()):
+        drafted = resolve(en, draft)
+        if drafted is not None:
+            d_latin, d_unsure, d_idn = drafted
+            status = "needs-review" if d_unsure else "machine"
+            la_entries.append({"fma": fma, "term": d_latin, "source": "llm", "status": status})
+            llm_la += 1
+            d_indo = indonesian_from_latin(d_latin, d_idn)
+            if d_indo is not None:
+                id_entries.append({"fma": fma, "term": d_indo, "source": "llm", "status": status})
+                llm_id += 1
+            continue
+
         result = to_latin(en)
         if result is None:
             skipped.append(en)
@@ -349,6 +367,7 @@ def main() -> int:
         print(f"  {en[:44]:44s} -> {la}")
         print(f"  {'':44s}    {idn}")
     print("\n" + "=" * 68)
+    print(f"draf LLM           : la {llm_la} · id {llm_id}  (source=llm, tetap berbadge)")
     risky_n = sum(1 for e in la_entries if e["status"] == "needs-review")
     reviewed_la = sum(1 for e in la_entries if e["status"] == "reviewed")
     reviewed_id = sum(1 for e in id_entries if e["status"] == "reviewed")

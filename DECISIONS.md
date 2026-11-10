@@ -1111,3 +1111,53 @@ sumber — dan tidak pernah hilang.
 `data_curated/high_yield.example.json` menunjukkan formatnya. Isinya butuh
 silabus dan Sobotta — pengetahuan domain product owner, bukan sesuatu yang
 boleh saya karang.
+
+## D-045 — Draf nomenklatur dari ingatan model bahasa (source `llm`)
+
+**Tanggal:** 10 November 2026 · **Fase:** F5 · **Status:** diterapkan · **Atas permintaan product owner**
+
+Product owner meminta kekosongan nomenklatur diisi dari pengetahuan Claude.
+Hasilnya `data_curated/nomenclature_draft.tsv`: 1.130 istilah Latin TA untuk
+nama Inggris FMA yang dinormalkan, ditimpakan generator di atas hasil aturan.
+
+    Latin      811 -> 2.262 dari 2.851 konsep (28,4% -> 79,3%)
+    Indonesia  811 -> 1.879               (28,4% -> 65,9%)
+    struktur ber-mesh yang punya Latin: 1.531 dari 1.658
+
+**Ini bukan review, dan statusnya tidak pura-pura.** Setiap entri keluar dengan
+`source: "llm"` dan status `machine` (128 baris yang saya sendiri ragu:
+`needs-review`). Tetap berbadge "otomatis", tetap tidak boleh jadi jawaban
+benar quiz, tetap kalah oleh `nomenclature_reviews.json`. Validator menolak
+entri `llm` yang berstatus `reviewed`. Ingatan model bisa salah dengan sangat
+meyakinkan; yang berubah adalah titik berangkat reviewer, bukan beban buktinya.
+
+Prioritas di 06: review manusia > draf LLM > aturan. Draf menang atas aturan
+karena urutan kata hasil aturan sering salah ("Arteria apicalis segmentalis").
+
+Kiri/kanan tidak ditulis dua kali. "Left X" = istilah dasar + sinister/dexter
+menurut genus kata kepala; "… of left Y" ditulis bentuk kirinya dan bentuk
+kanan didapat dengan menukar akar sinistr- ke dextr-. Kata kepala tanpa genus
+terdaftar tidak diberi sisi sama sekali, dan nama yang memuat kiri DAN kanan
+dilewati — keduanya lebih baik kosong daripada salah.
+
+Yang sengaja TIDAK diisi: 589 konsep sisanya hampir semuanya kelas ontologi
+FMA ("zone of muscle organ", "subdivision of …", "trunk of branch of …") yang
+memang tidak punya istilah TA. Juga tidak diisi: catatan klinis (aturan
+proyek melarang konten klinis massal dari LLM) dan daftar high-yield (butuh
+pipeline dijalankan ulang; ditunda sampai sesudah deploy).
+
+## D-046 — Deploy untuk belajar pribadi; aset data masuk git
+
+**Tanggal:** 10 November 2026 · **Fase:** F9 · **Status:** diputuskan product owner
+
+Product owner memutuskan deploy sekarang untuk pembelajaran pribadi tanpa
+menunggu penegasan lisensi dari DBCLS (D-005). Halaman Tentang tetap memuat
+atribusi dan konflik lisensinya apa adanya.
+
+Konsekuensi teknis: Vercel membangun dari GitHub, dan build tidak bisa
+menjalankan pipeline Python (butuh ~1 GB data mentah). Maka 33 berkas `.atlas`
+(33 MB), `manifest.json`, dan `structures.json` dikeluarkan dari `.gitignore`
+dan di-commit. `data_raw/` dan `data_interim/` tetap diabaikan.
+
+⚠️ Repo `Fmusaaa/3D-ANATOMI` bersifat PUBLIK, jadi data turunan BodyParts3D
+ikut terbuka di GitHub, bukan hanya di situs hasil deploy.

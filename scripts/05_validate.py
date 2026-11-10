@@ -295,7 +295,7 @@ def validate_nomenclature(by_fma: dict) -> dict[str, dict[str, str]]:
         return nomen
 
     valid_status = {"reviewed", "machine", "needs-review"}
-    valid_source = {"TA98", "TA2", "FMA", "curated", "machine"}
+    valid_source = {"TA98", "TA2", "FMA", "curated", "machine", "llm"}
 
     for f in files:
         lang = f.name.split(".")[1]
@@ -332,6 +332,10 @@ def validate_nomenclature(by_fma: dict) -> dict[str, dict[str, str]]:
                 err(f"{f.name}: {fma} punya source tidak sah '{source}'")
             # Status `reviewed` menuntut jejak siapa yang mereview — tanpa itu
             # klaim "terverifikasi" tidak bisa dipertanggungjawabkan.
+            # Ingatan model bahasa bukan review: entri `llm` tidak boleh
+            # menyandang status `reviewed`, dengan atau tanpa reviewedBy.
+            if source == "llm" and status == "reviewed":
+                err(f"{f.name}: {fma} bersumber `llm` tapi berstatus `reviewed`")
             if status == "reviewed" and not e.get("reviewedBy"):
                 err(f"{f.name}: {fma} berstatus `reviewed` tanpa field `reviewedBy`")
             if by_fma and fma not in by_fma:

@@ -14,7 +14,7 @@
  */
 
 export type NomenclatureStatus = 'reviewed' | 'machine' | 'needs-review'
-export type NomenclatureSource = 'TA98' | 'TA2' | 'FMA' | 'curated' | 'machine'
+export type NomenclatureSource = 'TA98' | 'TA2' | 'FMA' | 'curated' | 'machine' | 'llm'
 
 export interface NomenclatureEntry {
   fma: string
@@ -70,7 +70,7 @@ export function statusExplanation(status: NomenclatureStatus): string {
     case 'needs-review':
       return 'Diturunkan otomatis, dan urutan katanya masih tebakan karena ada lebih dari satu adjektiva. Jangan dipakai sebagai acuan sebelum diperiksa.'
     case 'machine':
-      return 'Diturunkan otomatis dari nama Inggris FMA, belum diverifikasi manusia. Jangan dipakai sebagai acuan ujian.'
+      return 'Diturunkan otomatis (aturan atau ingatan model bahasa), belum diverifikasi manusia. Jangan dipakai sebagai acuan ujian.'
   }
 }
 

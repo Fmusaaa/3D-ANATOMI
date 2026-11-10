@@ -7,6 +7,7 @@ tiap `npm run data:build`; yang ada di sini adalah masukannya.
 | Berkas | Isi | Dipakai oleh |
 |---|---|---|
 | `nomenclature_reviews.json` | Buku besar review nomenklatur: istilah Latin/Indonesia yang sudah diperiksa manusia, dengan nama reviewer, tanggal, dan sumber | `06_nomenclature.py` (overlay), validator |
+| `nomenclature_draft.tsv` | Draf ~1.100 istilah Latin dari ingatan model bahasa. **Bukan review**: keluar sebagai `source: llm`, tetap berbadge (D-045) | `06_nomenclature.py` |
 | `high_yield.json` | Daftar FMA struktur high-yield (D7). **Belum ada** — lihat `high_yield.example.json` | `03_decimate.py` (bobot), `07_review_nomenclature.py` (prioritas), quiz F7 |
 
 ## Mereview nomenklatur
