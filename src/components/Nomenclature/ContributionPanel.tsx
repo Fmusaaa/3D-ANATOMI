@@ -21,7 +21,7 @@ import { StatusBadge } from '@/components/Nomenclature/NameBlock'
 import type { StructureIndex } from '@/content/structures'
 import { cn } from '@/lib/utils'
 
-const REPO_ISSUE_URL = 'https://github.com/FMUSA93/corpus/issues/new'
+const REPO_ISSUE_URL = 'https://github.com/Fmusaaa/3D-ANATOMI/issues/new'
 
 interface Props {
   nomenclature: Nomenclature | null
@@ -107,7 +107,8 @@ export function ContributionPanel({ nomenclature, index, onClose }: Props) {
         <div>
           <h2 className="text-[15px] font-semibold text-panel-fg">Kontribusi terjemahan</h2>
           <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-panel-subtle">
-            Semua istilah di bawah diturunkan otomatis dari nama Inggris FMA dan{' '}
+            Semua istilah di bawah diturunkan otomatis — dari aturan atas nama Inggris
+            FMA atau dari ingatan model bahasa — dan{' '}
             <strong className="text-panel-muted">belum diperiksa manusia</strong>. Tidak
             satu pun dipakai sebagai jawaban benar di quiz. Koreksi dikirim lewat
             GitHub issue — v1 sengaja tanpa backend.
