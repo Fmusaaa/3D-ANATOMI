@@ -141,6 +141,15 @@ export class StateTexture {
     this.dirty = true
   }
 
+  /** Ganti slot palet (channel A) satu struktur. Visibilitas & seleksi tetap. */
+  setPalette(idx: number, paletteIndex: number): void {
+    this.assertIdx(idx)
+    const o = idx * 4
+    if (this.data[o + 3] === paletteIndex) return
+    this.data[o + 3] = paletteIndex
+    this.dirty = true
+  }
+
   /**
    * Struktur dihitung transparan hanya kalau ia TERLIHAT dan opacity < 0,99.
    *

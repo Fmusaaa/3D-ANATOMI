@@ -1,0 +1,261 @@
+{
+ "schema": 1,
+ "notes": [
+  {
+   "id": "aliran-csf",
+   "fma": [
+    "FMA75351",
+    "FMA78467",
+    "FMA78469",
+    "FMA78454",
+    "FMA78448"
+   ],
+   "title": "Jalur aliran CSF",
+   "source": "Cerebral Blood Flow, Blood Brain Barrier & CSF — dr. Fatinah, M.Biomed., AIFO-K (FK UNWAHAS)",
+   "body": "Ventrikel lateral, lalu **foramen interventriculare (Monro)**, ventrikel III, **aquaeductus cerebri (Sylvius)**, ventrikel IV, apertura mediana (Magendie) dan lateral (Luschka), cisterna magna, ruang subaraknoid otak dan medula spinalis, lalu diserap granulatio arachnoidea ke sinus vena dura.\n\nSumbatan di sepanjang jalur ini (misalnya tumor tektum yang menekan aquaeductus) menyebabkan **hidrosefalus obstruktif**.",
+   "sourceUrl": "https://drive.google.com/file/d/1or9W-pqgXLTR1ph-DgyGMRGY2QCKTArO/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "apendisitis",
+   "fma": [
+    "FMA14542"
+   ],
+   "title": "Apendisitis: dari nyeri periumbilikal ke kuadran kanan bawah",
+   "source": "Soal Cavitas Abdominis (bank soal Modul 2.3, FK UNWAHAS)",
+   "body": "- Nyeri awal **periumbilikal** karena appendix berasal dari **midgut**; nyeri dari peritoneum viseral sulit dilokalisasi (persarafan otonom).\n- Setelah peradangan mengenai **peritoneum parietal** (persarafan somatik), nyeri menjadi tajam dan terlokalisasi di kuadran kanan bawah; pada perforasi disertai **defans muskular**.",
+   "sourceUrl": "https://drive.google.com/file/d/1zkF58ZL4wCTyAb8NMUlSkYWEzcttXTze/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "circulus-willis",
+   "fma": [
+    "FMA50169",
+    "FMA50084",
+    "FMA50028"
+   ],
+   "title": "Circulus arteriosus (Willis)",
+   "source": "Cerebral Blood Flow, Blood Brain Barrier & CSF — dr. Fatinah, M.Biomed., AIFO-K (FK UNWAHAS)",
+   "body": "Komponen circulus arteriosus:\n\n- **A. cerebri anterior** (dari a. carotis interna), dihubungkan oleh **a. communicans anterior**.\n- **A. cerebri posterior** (cabang terminal a. basilaris).\n- **A. communicans posterior** menghubungkan a. cerebri posterior dengan a. carotis interna.\n\nLingkaran ini menyambungkan sirkulasi kedua hemisfer serta sirkulasi anterior dan posterior. Dalam keadaan normal tidak terjadi aliran silang karena tekanan kedua sisi sama.",
+   "sourceUrl": "https://drive.google.com/file/d/1or9W-pqgXLTR1ph-DgyGMRGY2QCKTArO/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "disfungsi-serebelum",
+   "fma": [
+    "FMA67944"
+   ],
+   "title": "Disfungsi serebelum: DANISH",
+   "source": "Anatomi Truncus Cerebri, Cerebellum & Medulla Spinalis (materi kuliah FK UNWAHAS)",
+   "body": "Penyebab: stroke, trauma, tumor, alkohol kronis. Tanda dihafal dengan akronim **DANISH**:\n\n- **D**ysdiadochokinesia (sulit gerakan cepat bergantian)\n- **A**taxia\n- **N**ystagmus (kasar)\n- **I**ntention tremor\n- **S**canning speech\n- **H**ypotonia\n\nKerusakan **vestibulocerebellum** menyebabkan hilang keseimbangan dan gaya berjalan dengan kaki lebar.",
+   "sourceUrl": "https://drive.google.com/file/d/1BgxXSbk0eOMQ5x_hRjGvQzlP8U9YFvA-/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "epigastrika-inferior",
+   "fma": [
+    "FMA20686"
+   ],
+   "title": "A. epigastrica inferior: segitiga Hesselbach dan hernia",
+   "source": "Soal Cavitas Abdominis (bank soal Modul 2.3, FK UNWAHAS)",
+   "body": "- Membentuk **batas lateral segitiga Hesselbach**.\n- Hernia yang menonjol **medial** terhadap pembuluh epigastrika inferior adalah **hernia inguinalis direk**; yang lateral, indirek.\n- Saat **parasentesis** pada asites, jarum harus menghindari arteri ini.",
+   "sourceUrl": "https://drive.google.com/file/d/1zkF58ZL4wCTyAb8NMUlSkYWEzcttXTze/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "fraktur-mandibula",
+   "fma": [
+    "FMA52748"
+   ],
+   "title": "Fraktur mandibula",
+   "source": "Scalp, Cranium, Columna Vertebralis — Dr. Ratna Relawati, Sp.KF, M.Si.Med (FK UNWAHAS)",
+   "body": "Sering **bilateral**: langsung di sisi trauma, dan tidak langsung di sisi kontralateral akibat gaya yang diteruskan.\n\nGambaran klinis: nyeri di lokasi fraktur dan **maloklusi** (gigi tidak sejajar).",
+   "sourceUrl": "https://drive.google.com/file/d/1veEoo3niwlO4aljvH-HIgU64uF6-GHUo/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "fraktur-nasal",
+   "fma": [
+    "FMA52745"
+   ],
+   "title": "Fraktur os nasale",
+   "source": "Scalp, Cranium, Columna Vertebralis — Dr. Ratna Relawati, Sp.KF, M.Si.Med (FK UNWAHAS)",
+   "body": "Fraktur wajah **paling sering**, karena tulang hidung menonjol di pangkal hidung. Sering disertai pembengkakan jaringan lunak yang bermakna dan **epistaksis**.",
+   "sourceUrl": "https://drive.google.com/file/d/1veEoo3niwlO4aljvH-HIgU64uF6-GHUo/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "fraktur-zigoma",
+   "fma": [
+    "FMA52747"
+   ],
+   "title": "Fraktur arkus zigomatikus",
+   "source": "Scalp, Cranium, Columna Vertebralis — Dr. Ratna Relawati, Sp.KF, M.Si.Med (FK UNWAHAS)",
+   "body": "Terjadi akibat trauma pada sisi wajah. Fraktur yang **bergeser** dapat merusak **nervus infraorbitalis** di dekatnya, menimbulkan parestesi ipsilateral pada pipi, hidung, dan bibir.",
+   "sourceUrl": "https://drive.google.com/file/d/1veEoo3niwlO4aljvH-HIgU64uF6-GHUo/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "herniasi-diskus",
+   "fma": [
+    "FMA10446"
+   ],
+   "title": "Herniasi diskus intervertebralis",
+   "source": "Scalp, Cranium, Columna Vertebralis — Dr. Ratna Relawati, Sp.KF, M.Si.Med (FK UNWAHAS)",
+   "body": "Diskus terdiri dari **anulus fibrosus** (keras, berkolagen) yang mengelilingi **nukleus pulposus** (seperti jeli). Herniasi terjadi ketika nukleus pulposus pecah menembus anulus fibrosus.\n\n- Arah tersering **posterolateral**.\n- Nukleus yang keluar dapat mengiritasi saraf spinal di dekatnya, menimbulkan gejala neurologis dan otot.\n- Di lumbal dan torakal diskus berbentuk baji, ikut menopang kelengkungan tulang belakang.",
+   "sourceUrl": "https://drive.google.com/file/d/1veEoo3niwlO4aljvH-HIgU64uF6-GHUo/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "kantong-morison",
+   "fma": [
+    "FMA7203"
+   ],
+   "title": "Kantong Morison (reses hepatorenal)",
+   "source": "Soal Cavitas Abdominis (bank soal Modul 2.3, FK UNWAHAS)",
+   "body": "Kantong Morison terletak **di antara hati dan ginjal kanan**. Pada trauma abdomen, cairan bebas di sini dicari dengan **USG FAST**.",
+   "sourceUrl": "https://drive.google.com/file/d/1zkF58ZL4wCTyAb8NMUlSkYWEzcttXTze/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "kolon-asendens",
+   "fma": [
+    "FMA14545"
+   ],
+   "title": "Colon ascendens: retroperitoneal sekunder",
+   "source": "Soal Cavitas Abdominis (bank soal Modul 2.3, FK UNWAHAS)",
+   "body": "Colon ascendens termasuk organ **retroperitoneal sekunder**: awalnya intraperitoneal, lalu menempel ke dinding posterior abdomen selama perkembangan.",
+   "sourceUrl": "https://drive.google.com/file/d/1zkF58ZL4wCTyAb8NMUlSkYWEzcttXTze/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "laserasi-scalp",
+   "fma": [
+    "FMA7163"
+   ],
+   "title": "Kulit kepala (scalp): laserasi dan danger area",
+   "source": "Scalp, Cranium, Columna Vertebralis — Dr. Ratna Relawati, Sp.KF, M.Si.Med (FK UNWAHAS)",
+   "body": "Lapisan scalp: **S**kin, dense **C**onnective tissue, epicranial **A**poneurosis, **L**oose areolar tissue, **P**eriosteum.\n\n**Laserasi dalam berdarah banyak** karena:\n1. Tarikan m. occipitofrontalis mencegah tepi luka dan pembuluh menutup.\n2. Pembuluh melekat erat pada jaringan ikat padat sehingga tidak bisa vasokonstriksi.\n3. Suplai darah kaya anastomosis.\n\n**Danger area** adalah lapisan jaringan ikat longgar. Di sini berjalan **vena emisaria** (tanpa katup) yang menghubungkan vena kulit kepala dengan sinus vena dura intrakranial, jalur penyebaran infeksi ke dalam tengkorak.",
+   "sourceUrl": "https://drive.google.com/file/d/1veEoo3niwlO4aljvH-HIgU64uF6-GHUo/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "le-fort",
+   "fma": [
+    "FMA9711"
+   ],
+   "title": "Fraktur maksila: klasifikasi Le Fort",
+   "source": "Scalp, Cranium, Columna Vertebralis — Dr. Ratna Relawati, Sp.KF, M.Si.Med (FK UNWAHAS)",
+   "body": "Berhubungan dengan trauma energi tinggi.\n\n- **Le Fort I** (tersering): prosesus alveolaris dan palatum durum terpisah dari sisa maksila, sehingga rahang atas dapat digerakkan.\n- **Le Fort II** (fraktur piramidal): bengkak di sekitar mata, memar menyerupai *raccoon sign*.\n- **Le Fort III** (fraktur transversal / disjungsi kraniofasial): seluruh tulang wajah terpisah dari dasar tengkorak, dengan fraktur simultan zigoma, rahang, dan tulang hidung.",
+   "sourceUrl": "https://drive.google.com/file/d/1veEoo3niwlO4aljvH-HIgU64uF6-GHUo/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "locked-in",
+   "fma": [
+    "FMA67943",
+    "FMA50542"
+   ],
+   "title": "Locked-in syndrome (lesi pons ventral)",
+   "source": "Anatomi Truncus Cerebri, Cerebellum & Medulla Spinalis (materi kuliah FK UNWAHAS)",
+   "body": "Kerusakan **pons ventral**, paling sering stroke akibat **trombosis atau perdarahan arteri basilaris**; bisa juga tumor, ensefalitis, atau trauma berat.\n\n- Kuadriplegia dan palsi bulbar (tak bisa bicara, mengunyah, menelan).\n- **Kesadaran dan kognisi utuh.**\n- Gerak mata **vertikal** dan berkedip tetap ada, satu-satunya jalur komunikasi.\n\nSuplai pons sebagian besar dari **arteri pontis** (cabang a. basilaris), sebagian kecil dari AICA dan a. superior cerebelli.",
+   "sourceUrl": "https://drive.google.com/file/d/1BgxXSbk0eOMQ5x_hRjGvQzlP8U9YFvA-/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "mesocolon-transversum",
+   "fma": [
+    "FMA14647"
+   ],
+   "title": "Mesocolon transversum: kompartemen supra- dan infrakolik",
+   "source": "Soal Cavitas Abdominis (bank soal Modul 2.3, FK UNWAHAS)",
+   "body": "Mesocolon transversum membagi *greater sac* menjadi kompartemen **suprakolik** dan **infrakolik**. Pus dari perforasi ulkus duodenum dapat mencapai ruang subfrenikus kanan melalui **saluran parakolik kanan**.",
+   "sourceUrl": "https://drive.google.com/file/d/1zkF58ZL4wCTyAb8NMUlSkYWEzcttXTze/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "pankreas",
+   "fma": [
+    "FMA7198"
+   ],
+   "title": "Pankreas retroperitoneal: nyeri menjalar ke punggung",
+   "source": "Soal Cavitas Abdominis (bank soal Modul 2.3, FK UNWAHAS)",
+   "body": "Pankreas adalah organ **retroperitoneal**, sehingga nyeri **pankreatitis akut** khas menjalar ke punggung.",
+   "sourceUrl": "https://drive.google.com/file/d/1zkF58ZL4wCTyAb8NMUlSkYWEzcttXTze/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "plexus-choroideus",
+   "fma": [
+    "FMA61934"
+   ],
+   "title": "Plexus choroideus dan produksi CSF",
+   "source": "Cerebral Blood Flow, Blood Brain Barrier & CSF — dr. Fatinah, M.Biomed., AIFO-K (FK UNWAHAS)",
+   "body": "Sebagian besar CSF disekresi plexus choroideus (dinding ventrikel lateral, atap ventrikel III dan IV): sekitar **500 mL/hari**, volume total sekitar 150 mL, sehingga diganti kira-kira 4 kali sehari.\n\nVaskularisasi: bagian anterior plexus ventrikel lateral dan III dari **a. choroidea anterior** (cabang a. carotis interna); bagian posterior dari a. choroidea posterior (cabang a. cerebri posterior); plexus ventrikel IV dari a. cerebelli inferior.\n\nCSF diserap ke sinus vena dura melalui **granulatio arachnoidea**.",
+   "sourceUrl": "https://drive.google.com/file/d/1or9W-pqgXLTR1ph-DgyGMRGY2QCKTArO/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "pterion",
+   "fma": [
+    "FMA52737",
+    "FMA52736",
+    "FMA9613",
+    "FMA52734"
+   ],
+   "title": "Pterion dan hematoma ekstradural",
+   "source": "Scalp, Cranium, Columna Vertebralis — Dr. Ratna Relawati, Sp.KF, M.Si.Med (FK UNWAHAS)",
+   "body": "**Pterion** adalah pertemuan berbentuk H antara os frontale, os parietale, os temporale, dan os sphenoidale, yaitu titik lemah tengkorak.\n\nPterion terletak di atas **arteria meningea media**. Fraktur di area ini dapat merobek arteri tersebut; darah menumpuk di antara tengkorak dan duramater membentuk **hematoma ekstradural (epidural)**.\n\n*Catatan dataset:* a. meningea media tidak ada di BodyParts3D, jadi hanya tulangnya yang bisa disorot.",
+   "sourceUrl": "https://drive.google.com/file/d/1veEoo3niwlO4aljvH-HIgU64uF6-GHUo/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "pungsi-lumbal",
+   "fma": [
+    "FMA9921",
+    "FMA13074",
+    "FMA13075"
+   ],
+   "title": "Pungsi lumbal dan anestesi epidural",
+   "source": "Cerebral Blood Flow, Blood Brain Barrier & CSF — dr. Fatinah, M.Biomed., AIFO-K (FK UNWAHAS)",
+   "body": "Pungsi lumbal untuk mengambil CSF dilakukan di **sela L3–L4** (atau lebih rendah) dengan teknik aseptik. Prosesus spinosus lumbal pendek dan tidak meluas ke inferior, sehingga jarum bisa mencapai kanal (tidak mungkin di antara vertebra torakal); prinsip yang sama dipakai untuk anestesi epidural.\n\n**Indikasi pemeriksaan CSF:** infeksi SSP, penyakit demielinasi, keganasan SSP, perdarahan.\n\n**Kontraindikasi:** diatesis perdarahan, **tekanan intrakranial meningkat**, infeksi di lokasi tusukan.\n\n*Traumatic tap* (pembuluh tertusuk jarum): darah tampak merah segar dan makin jernih saat CSF terus dialirkan, berbeda dengan perdarahan sungguhan.",
+   "sourceUrl": "https://drive.google.com/file/d/1or9W-pqgXLTR1ph-DgyGMRGY2QCKTArO/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "sindrom-wallenberg",
+   "fma": [
+    "FMA62004",
+    "FMA50518",
+    "FMA3956"
+   ],
+   "title": "Sindrom Wallenberg (medula lateral)",
+   "source": "Anatomi Truncus Cerebri, Cerebellum & Medulla Spinalis (materi kuliah FK UNWAHAS)",
+   "body": "Stroke iskemik di **medula oblongata dorsolateral** akibat oklusi **arteri vertebralis** atau **PICA** (a. inferior posterior cerebelli).\n\n- Vertigo mendadak, mual, muntah, nistagmus, ataksia.\n- **Disfagia, suara serak**, cegukan.\n- **Sindrom Horner** ipsilateral.\n- Hilang sensasi nyeri dan suhu di **wajah ipsilateral** dan **tubuh kontralateral**.\n\nFaktor risiko sama dengan stroke lain (hipertensi, merokok). Lesi medula **medial** disebut sindrom Dejerine.",
+   "sourceUrl": "https://drive.google.com/file/d/1BgxXSbk0eOMQ5x_hRjGvQzlP8U9YFvA-/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "sindrom-weber",
+   "fma": [
+    "FMA61993"
+   ],
+   "title": "Sindrom Weber (stroke mesensefalon)",
+   "source": "Anatomi Truncus Cerebri, Cerebellum & Medulla Spinalis (materi kuliah FK UNWAHAS)",
+   "body": "Stroke otak tengah, biasanya akibat oklusi pembuluh darah di batang otak bagian atas.\n\n- **Hemiplegia kontralateral**, dari kerusakan crus cerebri (traktus kortikospinalis).\n- **Palsi N. III ipsilateral**: ptosis, mata mengarah ke luar-bawah, pupil melebar.\n\nLesi **substantia nigra** di mesensefalon berkaitan dengan **Parkinson**. Tumor tektum, karena dekat aquaeductus cerebri, dapat menyebabkan **hidrosefalus obstruktif**.",
+   "sourceUrl": "https://drive.google.com/file/d/1BgxXSbk0eOMQ5x_hRjGvQzlP8U9YFvA-/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  },
+  {
+   "id": "sirkulasi-anterior",
+   "fma": [
+    "FMA3947"
+   ],
+   "title": "A. carotis interna dan autoregulasi aliran darah otak",
+   "source": "Cerebral Blood Flow, Blood Brain Barrier & CSF — dr. Fatinah, M.Biomed., AIFO-K (FK UNWAHAS)",
+   "body": "Otak disuplai empat arteri: **dua a. carotis interna** dan **dua a. vertebralis**, yang membentuk circulus arteriosus (Willis) di basis otak.\n\n- Sirkulasi **anterior** (dua ACI) membawa sekitar **72%** aliran darah otak total; posterior (dua a. vertebralis) sekitar 28%.\n- Aliran darah otak normal 50–65 mL/100 g jaringan/menit (sekitar 15% curah jantung istirahat).\n- Autoregulasi bekerja pada tekanan arteri **60–150 mmHg**; hiperkapnia menyebabkan vasodilatasi, hipokapnia vasokonstriksi.\n\nAutoregulasi **hilang** pada hipoksia akibat penyakit serebrovaskular oklusif, trauma kepala, atau kompresi otak oleh tumor, hematoma, dan edema.",
+   "sourceUrl": "https://drive.google.com/file/d/1or9W-pqgXLTR1ph-DgyGMRGY2QCKTArO/view",
+   "compiledBy": "Claude (ringkasan materi kuliah, belum diperiksa manusia)"
+  }
+ ]
+}

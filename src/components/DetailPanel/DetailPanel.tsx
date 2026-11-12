@@ -21,6 +21,8 @@ import {
 import { displayName, type LanguageCode, type Nomenclature } from '@/content/nomenclature'
 import { NameBlock } from '@/components/Nomenclature/NameBlock'
 import { NoteEditor } from '@/components/DetailPanel/NoteEditor'
+import { ClinicalNotes } from '@/components/DetailPanel/ClinicalNotes'
+import type { ClinicalNote } from '@/content/clinical'
 import { useStudyData } from '@/study/annotations'
 import { cn } from '@/lib/utils'
 
@@ -40,6 +42,8 @@ interface Props {
   language: LanguageCode
   onClose: () => void
   onFocus: (idx: number) => void
+  /** structureIdx -> catatan klinis bersumber (§E9). */
+  clinical?: ReadonlyMap<number, ClinicalNote[]> | undefined
   /** `embedded` menghilangkan posisi absolut supaya muat di bottom sheet. */
   variant?: 'floating' | 'embedded' | undefined
 }
@@ -64,6 +68,7 @@ export function DetailPanel({
   language,
   onClose,
   onFocus,
+  clinical,
   variant = 'floating',
 }: Props) {
   const [tab, setTab] = useState<Tab>('ikhtisar')
@@ -164,6 +169,12 @@ export function DetailPanel({
             {t.label}
             {/* §E11 AC8: titik ini BUKAN satu-satunya penanda — jumlahnya juga
                 dibacakan pembaca layar lewat aria-label di bawah. */}
+            {t.id === 'klinis' && (clinical?.get(s.idx)?.length ?? 0) > 0 && (
+              <span
+                aria-label="ada catatan klinis"
+                className="ml-1 inline-block size-1.5 rounded-full bg-panel-link align-middle"
+              />
+            )}
             {t.id === 'catatan' && notes.has(s.fma) && (
               <span
                 aria-label="struktur ini punya catatan"
@@ -247,15 +258,7 @@ export function DetailPanel({
           </div>
         )}
 
-        {tab === 'klinis' && (
-          <div className="py-6 text-center">
-            <p className="text-[13px] text-panel-muted">Belum ada catatan klinis</p>
-            <p className="mx-auto mt-1.5 max-w-[240px] text-[11px] leading-relaxed text-panel-subtle">
-              Korelasi klinis dikurasi di Fase 6. Catatan tanpa sumber ditolak
-              validator dan tidak akan pernah tampil.
-            </p>
-          </div>
-        )}
+        {tab === 'klinis' && <ClinicalNotes notes={clinical?.get(s.idx) ?? []} />}
       </div>
 
       <p className="shrink-0 border-t border-panel-border px-4 py-2 text-[10px] leading-relaxed text-panel-subtle">

@@ -1161,3 +1161,51 @@ dan di-commit. `data_raw/` dan `data_interim/` tetap diabaikan.
 
 ⚠️ Repo `Fmusaaa/3D-ANATOMI` bersifat PUBLIK, jadi data turunan BodyParts3D
 ikut terbuka di GitHub, bukan hanya di situs hasil deploy.
+
+## D-047 — Vena biru, arteri merah
+
+**Tanggal:** 12 November 2026 · **Fase:** F9 · **Status:** diterapkan · **Atas permintaan product owner**
+
+Sistem kardiovaskular semula satu warna. Sekarang 395 struktur vena (nama FMA
+memuat vein/vena/venous, plus sinus coronarius) diwarnai biru `#3b6fc4` lewat
+slot palet ke-14; 638 arteri dan struktur jantung tetap merah. Tidak ada
+geometri yang dibangun ulang: hanya channel A state texture yang diganti
+(`AtlasRenderer.markVenous`). Viewer menolak mewarnai struktur di luar sistem
+kardiovaskular, supaya salah klasifikasi nama tidak membuat tulang jadi biru.
+Swatch di panel sistem dibelah dua dan diberi teks "arteri merah · vena biru"
+(§E11 AC8: warna bukan satu-satunya pembeda).
+
+## D-048 — Catatan klinis dari materi kuliah product owner
+
+**Tanggal:** 12 November 2026 · **Fase:** F6 · **Status:** diterapkan · **Atas permintaan product owner**
+
+22 catatan klinis untuk 36 FMA, diringkas Claude dari empat materi kuliah FK
+UNWAHAS di Google Drive product owner (scalp/cranium/columna vertebralis,
+truncus cerebri/cerebellum/medulla spinalis, cerebral blood flow & CSF, soal
+cavitas abdominis). Ini BUKAN generate massal dari ingatan model: tiap
+catatan hanya memuat klaim yang ada di slide sumbernya, menyebut judul kuliah
+dan dosennya, menautkan berkas aslinya, dan menyatakan terang bahwa ia
+diringkas Claude dan belum diperiksa manusia.
+
+Format: `public/data/content/clinical/*.md` (front-matter `fma` boleh berisi
+beberapa id) dikompilasi `08_clinical.py` ke `clinical.json`. Validator
+menolak catatan tanpa `source`, FMA yang tidak ada, dan `clinical.json` yang
+tidak sinkron dengan berkas `.md`. Catatan yang menunjuk grup FMA (mis.
+"vertebral artery") berlaku untuk anggotanya (kiri dan kanan).
+
+## D-049 — Yang diminta tapi tidak bisa diberikan dataset ini
+
+**Tanggal:** 12 November 2026 · **Status:** batas dataset, dicatat terbuka
+
+- **Lapisan otot dinding perut** (rectus abdominis, obliquus internus,
+  transversus abdominis, vagina musculi recti): BodyParts3D hanya punya
+  **m. obliquus externus** dan **linea alba**. Lapisan di bawahnya tidak ada,
+  jadi tampilan berlapis seperti gambar referensi tidak bisa dibuat dari data
+  ini.
+- **Ligamen dan tendon**: hanya 18 ligamen (mayoritas laring dan mata) dan
+  ~6 tendon/retinakulum (a.l. tendo calcaneus, retinaculum flexorum). Tidak
+  ada ligamen sendi besar (lutut, bahu, panggul) maupun ligamen vertebra.
+- **A. meningea media, hati utuh, medula spinalis**: tidak ada sebagai mesh.
+
+Menambah salah satunya butuh dataset lain (mis. Z-Anatomy, CC BY-SA, punya
+ligamen dan lapisan otot jauh lebih lengkap) — keputusan product owner.

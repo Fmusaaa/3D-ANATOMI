@@ -132,7 +132,13 @@ export function SystemTree({
                       <span
                         aria-hidden="true"
                         className="size-2.5 shrink-0 rounded-full ring-1 ring-panel-border"
-                        style={{ background: SYSTEM_SWATCH[s.id] ?? '#888' }}
+                        style={{
+                          background:
+                            s.id === 'systema_cardiovasculare'
+                              ? // Separuh merah, separuh biru: arteri dan vena (BatchManager.VENA_COLOR).
+                                'linear-gradient(90deg, #c0392b 50%, #3b6fc4 50%)'
+                              : (SYSTEM_SWATCH[s.id] ?? '#888'),
+                        }}
                       />
                       <span
                         className={cn(
@@ -155,6 +161,9 @@ export function SystemTree({
                       <span className="text-[10px] text-panel-subtle tabular-nums">
                         {s.count.toLocaleString('id')}
                       </span>
+                      {s.id === 'systema_cardiovasculare' && (
+                        <span className="text-[10px] text-panel-subtle">arteri merah · vena biru</span>
+                      )}
                       {s.ghosted && (
                         <span className="rounded bg-panel-soft-hover px-1 text-[9px] tracking-wide text-panel-muted uppercase">
                           ghost

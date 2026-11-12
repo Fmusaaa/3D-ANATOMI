@@ -10,7 +10,7 @@
  * state per-frame yang masuk React.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   SYSTEM_LABEL,
   loadStructures,
@@ -25,6 +25,7 @@ import {
   type LanguageCode,
   type Nomenclature,
 } from '@/content/nomenclature'
+import { indexClinical, loadClinical, type ClinicalNote } from '@/content/clinical'
 import { ContributionPanel } from '@/components/Nomenclature/ContributionPanel'
 import { LanguageToggle } from '@/components/Nomenclature/LanguageToggle'
 import { BottomSheet, type SheetStop } from '@/components/Mobile/BottomSheet'
@@ -55,6 +56,12 @@ import type {
   ViewerStats,
 } from '@/viewer/types'
 
+/**
+ * Nama FMA yang menandai struktur vena. `sinus` hanya sinus coronarius: sinus
+ * lain di dataset (sinus paranasal) bukan pembuluh dan ada di sistem lain.
+ */
+const VENOUS_NAME = /\b(vein|veins|vena|venae|venous)\b|coronary sinus/i
+
 export function AtlasViewer() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rendererRef = useRef<AtlasRenderer | null>(null)
@@ -73,6 +80,7 @@ export function AtlasViewer() {
   const [toast, setToast] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [nomenclature, setNomenclature] = useState<Nomenclature | null>(null)
+  const [clinicalNotes, setClinicalNotes] = useState<ClinicalNote[]>([])
   const [language, setLanguage] = useState<LanguageCode>(DEFAULT_LANGUAGE)
   const [showContrib, setShowContrib] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
@@ -123,6 +131,17 @@ export function AtlasViewer() {
     setClip(restored.clip)
     setClipOffsetMm(renderer.clipOffsetMm())
   }, [])
+
+  // Vena biru, arteri merah (lihat AtlasRenderer.markVenous). Dijalankan sekali
+  // begitu geometri DAN indeks nama sama-sama siap; urutannya tidak dijamin.
+  useEffect(() => {
+    const r = rendererRef.current
+    if (!ready || !index || !r) return
+    const venous = index.all
+      .filter((st) => st.system === 'systema_cardiovasculare' && VENOUS_NAME.test(st.name.en))
+      .map((st) => st.idx)
+    r.markVenous(venous)
+  }, [ready, index])
 
   /** Buka bookmark (§E15). */
   const handleOpenBookmark = useCallback(
@@ -187,6 +206,12 @@ export function AtlasViewer() {
       .then(setNomenclature)
       .catch(() => {
         setNomenclature(null)
+      })
+    // Catatan klinis juga boleh gagal: tab Klinis lalu jujur bilang kosong.
+    void loadClinical('/data')
+      .then(setClinicalNotes)
+      .catch(() => {
+        setClinicalNotes([])
       })
 
     return () => {
@@ -301,6 +326,11 @@ export function AtlasViewer() {
         }, 4000)
       })
   }
+
+  const clinical = useMemo(
+    () => (index ? indexClinical(clinicalNotes, index) : undefined),
+    [clinicalNotes, index],
+  )
 
   const coverage = nomenclature
     ? {
@@ -438,6 +468,7 @@ export function AtlasViewer() {
           onFocus={(idx) => {
             rendererRef.current?.select(idx)
           }}
+          clinical={clinical}
         />
       )}
 
@@ -463,6 +494,7 @@ export function AtlasViewer() {
             onFocus={(idx) => {
               rendererRef.current?.select(idx)
             }}
+            clinical={clinical}
           />
         </BottomSheet>
       )}

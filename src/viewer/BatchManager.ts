@@ -63,13 +63,23 @@ export const SYSTEM_COLORS: Record<SystemId, number> = {
   integumentum_commune: 0xd9b39c,
 }
 
+/**
+ * Slot palet di luar 13 sistem. Vena dan arteri sama-sama `systema_cardiovasculare`,
+ * tapi atlas anatomi mana pun mewarnai keduanya berbeda (arteri merah, vena biru):
+ * itu yang membuat mata bisa melacak alur darah tanpa membaca label. Struktur
+ * diberi slot ini lewat `AtlasRenderer.markVenous()`; geometri tidak disentuh.
+ */
+export const PALETTE_VENA = SYSTEM_ORDER.length
+export const VENA_COLOR = 0x3b6fc4
+const PALETTE_SIZE = SYSTEM_ORDER.length + 1
+
 export function systemIndex(id: string): number {
   const i = (SYSTEM_ORDER as readonly string[]).indexOf(id)
   return i < 0 ? 0 : i
 }
 
 function buildPalette(): THREE.DataTexture {
-  const data = new Uint8Array(SYSTEM_ORDER.length * 4)
+  const data = new Uint8Array(PALETTE_SIZE * 4)
   SYSTEM_ORDER.forEach((id, i) => {
     const c = new THREE.Color(SYSTEM_COLORS[id])
     data[i * 4] = Math.round(c.r * 255)
@@ -77,7 +87,13 @@ function buildPalette(): THREE.DataTexture {
     data[i * 4 + 2] = Math.round(c.b * 255)
     data[i * 4 + 3] = 255
   })
-  const tex = new THREE.DataTexture(data, SYSTEM_ORDER.length, 1, THREE.RGBAFormat)
+  const vena = new THREE.Color(VENA_COLOR)
+  const o = PALETTE_VENA * 4
+  data[o] = Math.round(vena.r * 255)
+  data[o + 1] = Math.round(vena.g * 255)
+  data[o + 2] = Math.round(vena.b * 255)
+  data[o + 3] = 255
+  const tex = new THREE.DataTexture(data, PALETTE_SIZE, 1, THREE.RGBAFormat)
   tex.minFilter = THREE.NearestFilter
   tex.magFilter = THREE.NearestFilter
   tex.generateMipmaps = false
@@ -186,7 +202,7 @@ export class BatchManager {
       shader.uniforms['uXformTex'] = { value: this.xformTex.texture }
       shader.uniforms['uStateTexHeight'] = { value: this.stateTex.height }
       shader.uniforms['uPaletteTex'] = { value: this.palette }
-      shader.uniforms['uPaletteSize'] = { value: SYSTEM_ORDER.length }
+      shader.uniforms['uPaletteSize'] = { value: PALETTE_SIZE }
       shader.uniforms['uOpaquePass'] = { value: isOpaque ? 1 : 0 }
       shader.uniforms['uQuantScale'] = { value: new THREE.Vector3(...batch.header.quantScale) }
       shader.uniforms['uQuantOffset'] = { value: new THREE.Vector3(...batch.header.quantOffset) }

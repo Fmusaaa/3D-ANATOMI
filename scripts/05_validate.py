@@ -373,9 +373,29 @@ def validate_clinical(by_fma: dict) -> None:
             continue
         if not fm.get("source"):
             err(f"clinical/{f.name}: field `source` kosong — §E9 AC4 melarang tampil tanpa sumber")
-        fma = fm.get("fma", "")
-        if fma and by_fma and fma not in by_fma:
-            err(f"clinical/{f.name}: menunjuk FMA {fma} yang tidak ada di structures.json")
+        # `fma` boleh berisi beberapa id dipisah koma (satu catatan, beberapa struktur).
+        for fma in [x.strip() for x in fm.get("fma", "").split(",") if x.strip()]:
+            if by_fma and fma not in by_fma:
+                err(f"clinical/{f.name}: menunjuk FMA {fma} yang tidak ada di structures.json")
+
+    # clinical.json adalah keluaran 08_clinical.py dan itulah yang dibaca app.
+    # Kalau .md berubah tapi lupa dikompilasi ulang, app diam-diam menampilkan
+    # catatan lama — tolak di sini.
+    compiled = CONTENT / "clinical.json"
+    md_ids = {f.stem for f in CLINICAL.glob("*.md")}
+    if not compiled.exists():
+        err("clinical.json tidak ada — jalankan scripts/08_clinical.py")
+        return
+    try:
+        notes = json.loads(compiled.read_text(encoding="utf-8")).get("notes", [])
+    except json.JSONDecodeError as exc:
+        err(f"clinical.json: JSON rusak ({exc})")
+        return
+    if {n.get("id") for n in notes} != md_ids:
+        err("clinical.json tidak sinkron dengan clinical/*.md — jalankan scripts/08_clinical.py")
+    for n in notes:
+        if not n.get("source"):
+            err(f"clinical.json: catatan {n.get('id')} tanpa `source`")
 
 
 def validate_quiz(by_fma: dict, nomen: dict[str, dict[str, str]]) -> None:

@@ -57,6 +57,7 @@ Batas modul di atas **ditegakkan ESLint**, bukan cuma niat — lihat
 | `npm run nomen:sheet -- --lang la --out review-la.tsv` | Ekspor lembar review TSV |
 | `npm run nomen:apply -- review-la.tsv --by "Nama"` | Terapkan keputusan ke `data_curated/nomenclature_reviews.json` |
 | `npm run nomen:status` | Cakupan vs §E7 AC6 |
+| `python scripts/08_clinical.py` | Kompilasi `clinical/*.md` → `clinical.json`. Wajib setelah mengubah catatan klinis |
 | `npm run test:data` | 6 suite test data (Python) |
 | `npm test` | Unit test Vitest |
 | `npm run preview` | Serve build produksi (port 4173). **Satu-satunya cara menguji service worker** — di `dev` sengaja dimatikan |
@@ -167,6 +168,8 @@ viewer di luar `types.ts`/`events.ts`.
   Ketiganya sederajat; yang mengikat mereka FMA ID. Toggle LA/ID/EN hanya
   menentukan urutan dan mana yang muat di tempat sempit.
 - Jangan pakai konten klinis tanpa field `source` — validator menolaknya.
+  Catatan yang diringkas Claude wajib mengisi `compiledBy` dan hanya memuat
+  klaim yang ada di sumbernya (D-048).
 - Jangan generate konten klinis massal dengan LLM lalu terbitkan. User-nya calon
   dokter. 40 catatan yang benar > 400 yang mungkin salah.
 - Jangan kerjakan hal di luar fase yang sedang berjalan (§4.2 non-goals:

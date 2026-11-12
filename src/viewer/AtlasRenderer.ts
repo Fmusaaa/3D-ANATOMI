@@ -14,7 +14,7 @@
  */
 
 import * as THREE from 'three'
-import { BatchManager, systemIndex } from './BatchManager'
+import { BatchManager, PALETTE_VENA, systemIndex } from './BatchManager'
 import { CameraController } from './CameraController'
 import { PickingPass } from './PickingPass'
 import { SelectState, StateTexture, XformTexture, type SelectStateValue } from './StateTexture'
@@ -396,6 +396,27 @@ export class AtlasRenderer {
 
   systems(): SystemState[] {
     return this.visibility?.snapshot() ?? []
+  }
+
+  /**
+   * Warnai struktur vena dengan biru, terpisah dari arteri (merah).
+   *
+   * Viewer tidak tahu nama struktur; yang memutuskan mana vena adalah UI, dari
+   * nama FMA. Di sini hanya dijaga: struktur di luar sistem kardiovaskular
+   * diabaikan, supaya salah klasifikasi nama tidak mewarnai tulang jadi biru.
+   * Mengembalikan jumlah struktur yang benar-benar diwarnai ulang.
+   */
+  markVenous(idxs: readonly number[]): number {
+    const state = this.state
+    if (!state) return 0
+    let n = 0
+    for (const idx of idxs) {
+      if (this.systemOf.get(idx) !== 'systema_cardiovasculare') continue
+      state.setPalette(idx, PALETTE_VENA)
+      n++
+    }
+    if (n > 0) this.requestRender()
+    return n
   }
 
   // --- potongan anatomis (§E13) ---
